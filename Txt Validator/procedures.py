@@ -189,13 +189,14 @@ class SQLServer(object):
         except pyodbc.Error as e:
             self.logFile.error(f"SQL statement executed (FAILED): {query} with params: {params} {e}")
 
-        finally:            
-            if result==[]:
-                result = None
-                self.logFile.error(f"SQL statement executed (NOT FOUND): {query} with params: {params}")
-
+        finally:
             cursor.close()
             conn.close()
             self.logFile.info("Database connection closed.")
+
+            if result==[]:
+                result = None
+                self.logFile.error(f"SQL statement executed (NOT FOUND): {query} with params: {params}")
+                return str(result)
 
             return str(result[0][2])
