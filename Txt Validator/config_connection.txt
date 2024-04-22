@@ -1,0 +1,6 @@
+DRIVER=SQL Server;
+SERVER_NAME=DESKTOP-L5UPLGI;
+DATABASE=Lincoln_XE;
+Trusted_Connection=No;
+UID=sa;
+PWD=12341234;
