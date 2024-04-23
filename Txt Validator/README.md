@@ -5,7 +5,7 @@ To configure the database connection open 'config_connection.txt' and set 'SERVE
 DO NOT include spaces or any symbols that are not allowed by the policies of a Server name in SQL.
 
 Set DATABASE to the name of your database located in your SQL Server connection, following the
-the same rules of typing as well.
+same rules of typing as well.
 
 To configure Trusted_Connection you need to know your SQL Server settings.
 
