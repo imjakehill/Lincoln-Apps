@@ -133,7 +133,15 @@ class SQLServer(object):
 
         try: 
             with open(txtFile, 'r') as file:
-                content = file.read().strip("[REGISTRO]\nAsiento\n")
+                fileArray = file.readlines()
+
+                fileArray.pop(0);fileArray.pop(0)
+
+                content = ""
+
+                for i in fileArray:
+                    content+=i
+
                 query = "insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values ('1','1','ASIENTO', ?)"
                 cursor.execute(query, content)
 
@@ -143,6 +151,7 @@ class SQLServer(object):
 
             procedureStatus = True
             self.logFile.info(f"SQL statement executed: {query} with params: Txt File: '{txtFile}'")
+            self.logFile.info(f"'{txtFile}' Successfully loaded to ICR")
 
         except pyodbc.Error as e:
             self.logFile.error(f"SQL statement executed (FAILED): {query} with params: Txt File: '{txtFile}' {e}")
@@ -185,6 +194,7 @@ class SQLServer(object):
             conn.commit()
 
             self.logFile.info(f"SQL statement executed: {query} with params: {params}")
+            self.logFile.info(f"Successfully loaded to BAS")
 
         except pyodbc.Error as e:
             self.logFile.error(f"SQL statement executed (FAILED): {query} with params: {params} {e}")
@@ -200,3 +210,5 @@ class SQLServer(object):
                 return str(result)
 
             return str(result[0][2])
+
+#♥
