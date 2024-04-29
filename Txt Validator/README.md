@@ -1,11 +1,11 @@
-Txt Validator ver. 8.2.1
+Txt Validator 8.4
 
 To configure the database connection open 'config_connection.txt' and set 'SERVER_NAME' to the name of your server.
 
 DO NOT include spaces or any symbols that are not allowed by the policies of a Server name in SQL.
 
 Set DATABASE to the name of your database located in your SQL Server connection, following the
-same rules of typing as well.
+the same rules of typing as well.
 
 To configure Trusted_Connection you need to know your SQL Server settings.
 

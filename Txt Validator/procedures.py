@@ -25,9 +25,8 @@ class SQLServer(object):
 
     def isTxtCorrect(self, txtFile:str) -> bool:
         with open(f"{txtFile}", "r") as file: # File reading ------------------------------------------
-            lineas = file.read().strip().split('\n')
-
-            if lineas[1].upper()=="ASIENTO":
+            lineas = file.readlines()
+            if "|" in lineas[-1]:
                 self.logFile.info(f"File: '{txtFile}' was loaded.")
                 return True
             else:
@@ -55,7 +54,7 @@ class SQLServer(object):
             for linea in lineas[2:]:
                 valores = linea.split('|')
                 fileArray.append(valores)
-                
+
             fileDate = fileArray[0][0]
             fileArray.pop(0)
             
@@ -107,7 +106,7 @@ class SQLServer(object):
                     notFoundQuery2.append(fileArray[i][10])
                     continue
 
-            return notFoundQuery1==[], notFoundQuery2==[], notFoundQuery1, notFoundQuery2
+            return notFoundQuery1==[], notFoundQuery2==[], notFoundQuery1, notFoundQuery2, fileDate
 
         except pyodbc.Error as e:
             pass
@@ -134,9 +133,11 @@ class SQLServer(object):
 
         try: 
             with open(txtFile, 'r') as file:
-                content = file.read()
+                content = file.read().strip("[REGISTRO]\nAsiento\n")
                 query = "insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values ('1','1','ASIENTO', ?)"
-                cursor.execute(query, (content,))
+                cursor.execute(query, content)
+
+                print(content)
                 
             conn.commit()
 
@@ -180,7 +181,6 @@ class SQLServer(object):
             cursor.execute(query, (params,))
 
             result = cursor.fetchall()
-            print(result)
                 
             conn.commit()
 
