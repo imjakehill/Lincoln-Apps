@@ -140,7 +140,21 @@ class SQLServer(object):
                     valores = linea.split('|')
                     fileElementsArray.append(valores)
 
-                #print(fileElementsArray)
+                if observacion!='' and fileElementsArray[-1][-1]!='':
+                    for i in fileElementsArray:
+                        i[-1] = ''
+
+            fechaRow = ''
+            with open(txtFile, "r") as readFile:
+                fechaRow = readFile.readlines()[2]
+
+            with open(txtFile, "w") as file:
+                file.seek(0)
+                file.write(f"[REGISTRO]\nASIENTO\n{fechaRow}")
+                lines = '\n'.join(['|'.join(row) for row in fileElementsArray])
+
+                file.write(lines)
+
 
             with open(txtFile, 'r') as file:
                 fileArray = file.readlines()
