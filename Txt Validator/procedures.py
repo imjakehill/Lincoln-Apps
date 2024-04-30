@@ -140,12 +140,12 @@ class SQLServer(object):
                 content = ""
 
                 for i in fileArray:
-                    content+=i
+                    content+=i+" "
 
                 query = "insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values ('1','1','ASIENTO', ?)"
                 cursor.execute(query, content)
 
-                print(content)
+                #print(content)
                 
             conn.commit()
 
@@ -163,7 +163,7 @@ class SQLServer(object):
             
             return procedureStatus
         
-    def importarBAS(self) -> str:
+    def importarBAS(self, txtFile:str, observacion:str) -> str:
         try: # ICR Database connection --------------------------------------------------------------------
             if self.finalconfig[3].lower()=="yes":
                 conn = pyodbc.connect(f'DRIVER={self.finalconfig[0]};SERVER={self.finalconfig[1]};DATABASE={self.finalconfig[2]};Trusted_Connection={self.finalconfig[3]};')
@@ -178,6 +178,19 @@ class SQLServer(object):
             self.logFile.error(f"Database connection failed (func:importarICR): {e}")
 
         result = None
+
+        with open(f"{txtFile}", "r") as file: # File reading ------------------------------------------
+            lineas = file.read().strip().split('\n')
+            fileArray = []
+
+            for linea in lineas[2:]:
+                valores = linea.split('|')
+                fileArray.append(valores)
+
+            fileDate = fileArray[0][0]
+            fileArray.pop(0)
+        
+        #print(len(fileArray[0]))
 
         try:
             cursor.execute("SELECT SUSER_SNAME() AS CurrentUser")

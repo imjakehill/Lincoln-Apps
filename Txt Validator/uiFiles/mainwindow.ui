@@ -510,7 +510,7 @@ border-radius: 5px;</string>
                   <number>5</number>
                  </property>
                  <item>
-                  <widget class="QPlainTextEdit" name="txtReportTextEdit_2">
+                  <widget class="QPlainTextEdit" name="txtObservationTextEdit">
                    <property name="maximumSize">
                     <size>
                      <width>300</width>
