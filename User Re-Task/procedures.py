@@ -170,8 +170,8 @@ class SQLServer(object):
             cursor.execute("SELECT CONVERT(DATE, ?) AS fecha", dateNewUser_obj)
             finalDateNewUser = cursor.fetchone().fecha
 
-            query = """insert into CMPAUTORIZACION_AUXAHS (USUARIOCARGABACKUP,USUARIOACAMBIAR,USUARIOBACKUP,FECHADESDE,FECHAHASTA) 
-                    values (?, ?, ?, ?, ?)"""
+            query = """insert into CMPAUTORIZACION_AUXAHS (USUARIOCARGABACKUP,USUARIOACAMBIAR,USUARIOBACKUP,FECHADESDE,FECHAHASTA,COMPLETADO) 
+                    values (?, ?, ?, ?, ?, 0)"""
 
             params = [currentUser, userComboboxText, newUserComboboxText, finalDateUser, finalDateNewUser]
 
@@ -179,16 +179,8 @@ class SQLServer(object):
                 
             rows_affected = cursor.rowcount
             self.logFile.info(f"SQL statement executed: {query} with params {params} (Row count affected: {rows_affected})")
-            
-            conn.commit()
-            
-            query = "exec SP_Servicio_Backup_Autorizantes ?, ?, ?, ?"
-            params = [userComboboxText, newUserComboboxText, finalDateUser, finalDateNewUser]
 
-            cursor.execute(query, params)
-
-            rows_affected = cursor.rowcount
-            self.logFile.info(f"SQL statement executed: {query} with params {params} (Row count affected: {rows_affected})")
+            
 
             conn.commit()
 
