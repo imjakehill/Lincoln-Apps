@@ -151,10 +151,13 @@ class SQLServer(object):
             with open(txtFile, "w") as file:
                 file.seek(0)
                 file.write(f"[REGISTRO]\nASIENTO\n{fechaRow}")
+
+                # Unificar el array y convertirlo en el formato del txt
                 lines = '\n'.join(['|'.join(row) for row in fileElementsArray])
 
                 file.write(lines)
 
+                file.close()
 
             with open(txtFile, 'r') as file:
                 fileArray = file.readlines()
@@ -162,15 +165,18 @@ class SQLServer(object):
                 fileArray.pop(0);fileArray.pop(0)
 
                 content = ""
-
+                
                 if fileElementsArray[-1][-1]=='':
                     for i in range(1, len(fileArray)):
                         fileArray[i] = fileArray[i].replace("\n", f"{observacion}\n")
                     
-                    fileArray[-1] += observacion
+                    fileArray[-1] += observacion+'\n'
+
+                fileArray[-1] = fileArray[-1].replace(' ', '\xa0')
 
                 for i in fileArray:
-                    content+=i+" "
+                    content+=i
+
 
                 query = "insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values ('1','1','ASIENTO', ?)"
                 cursor.execute(query, content)
