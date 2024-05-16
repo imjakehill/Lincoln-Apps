@@ -177,9 +177,8 @@ class SQLServer(object):
                 for i in fileArray:
                     content+=i
 
-
-                query = "insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values ('1','1','ASIENTO', ?)"
-                cursor.execute(query, content)
+                query = f"insert into ICR.DBO.ENTRADA (codemp,codsuc,etiqueta,cuerpo) values (1,1,'ASIENTO','{content}')"
+                cursor.execute(query)
                 
             conn.commit()
 
