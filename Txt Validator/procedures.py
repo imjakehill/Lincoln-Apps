@@ -164,6 +164,8 @@ class SQLServer(object):
 
                 fileArray.pop(0);fileArray.pop(0)
 
+                fileArray[0] = fileArray[0].replace('\n', '\r\n')
+
                 content = ""
                 
                 if fileElementsArray[-1][-1]=='':
@@ -173,6 +175,8 @@ class SQLServer(object):
                     fileArray[-1] += observacion+'\r\n'
 
                 fileArray[-1] = fileArray[-1].replace(' ', '\xa0')
+
+                print(fileArray)
 
                 for i in fileArray:
                     content+=i

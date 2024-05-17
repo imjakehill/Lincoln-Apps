@@ -1,4 +1,4 @@
-Txt Validator 8.5.5
+Txt Validator 8.6
 
 To configure the database connection open 'config_connection.txt' and set 'SERVER_NAME' to the name of your server.
 
