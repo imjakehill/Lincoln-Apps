@@ -1,4 +1,4 @@
-import pyodbc, logging, threading
+import pyodbc, logging, threading, datetime
 
 class SQLServer(object):
     
@@ -176,8 +176,6 @@ class SQLServer(object):
 
                 fileArray[-1] = fileArray[-1].replace(' ', '\xa0')
 
-                print(fileArray)
-
                 for i in fileArray:
                     content+=i
 
@@ -200,7 +198,7 @@ class SQLServer(object):
             
             return procedureStatus
         
-    def importarBAS(self) -> str:
+    def importarBAS(self, observacion, currentDatetime) -> str:
         try: # ICR Database connection --------------------------------------------------------------------
             if self.finalconfig[3].lower()=="yes":
                 conn = pyodbc.connect(f'DRIVER={self.finalconfig[0]};SERVER={self.finalconfig[1]};DATABASE={self.finalconfig[2]};Trusted_Connection={self.finalconfig[3]};')
@@ -214,23 +212,34 @@ class SQLServer(object):
         except pyodbc.Error as e:
             self.logFile.error(f"Database connection failed (func:importarICR): {e}")
 
-        result = None
+        selectResult = None
 
         try:
-            cursor.execute("SELECT SUSER_SNAME() AS CurrentUser")
-            params = cursor.fetchone()[0]
+            cursor.execute("SELECT CONVERT(DATETIME, ?) AS fecha", currentDatetime[0:-3])
+            params = [datetime.datetime.strftime(cursor.fetchone().fecha,'%Y-%m-%d %H:%M:%S.%f')[0:-3]]
 
-            query = """select  top 1 MAX(fechareg), nrotrans, NUMERO from TRANSAC where FUENTE='DISCV' and username=? and NROTRANSELIM is null
+            cursor.execute("SELECT SUSER_SNAME() AS CurrentUser")
+            params.append(cursor.fetchone()[0])
+
+            query = """select  top 1 MAX(fechareg), nrotrans, NUMERO from TRANSAC where FECHAREG >= ? and FUENTE='DISCV' and username=? and NROTRANSELIM is null
                        group by NROTRANS,NUMERO
                        order by 1 desc"""
-            
-            cursor.execute(query, (params,))
 
-            result = cursor.fetchall()
-                
-            conn.commit()
+            cursor.execute(query, params)
+
+            selectResult = cursor.fetchall()
 
             self.logFile.info(f"SQL statement executed: {query} with params: {params}")
+
+            params = (observacion, selectResult[0][1])
+
+            query2 = "update transac set observacion=? WHERE nrotrans = ?"
+
+            cursor.execute(query2, params)
+
+            conn.commit()
+
+            self.logFile.info(f"SQL statement executed: {query2} with params: {params}")
             self.logFile.info(f"Successfully loaded to BAS")
 
         except pyodbc.Error as e:
@@ -241,11 +250,11 @@ class SQLServer(object):
             conn.close()
             self.logFile.info("Database connection closed.")
 
-            if result==[]:
-                result = None
+            if selectResult==[]:
+                selectResult = None
                 self.logFile.error(f"SQL statement executed (NOT FOUND): {query} with params: {params}")
-                return str(result)
+                return str(selectResult)
 
-            return str(result[0][2])
+            return str(selectResult[0][2])
 
 #♥
