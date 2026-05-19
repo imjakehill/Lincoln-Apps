@@ -1,0 +1,351 @@
+/* ═══════════════════════════════════════════════════════════════
+   Dashboard.razor.css
+   Estilos con CSS Isolation — solo aplican a Dashboard.razor
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── PÁGINA COMPLETA ──────────────────────────────────────────── */
+.dashboard-completo {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ── HEADER ───────────────────────────────────────────────────── */
+.dashboard-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dde3ed;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 12px 32px;
+}
+
+.header-usuario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3a6b;
+    font-weight: 650;
+    font-size: 1.00rem;
+}
+
+.icono-usuario {
+    color: #1a3a6b;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.logo-img {
+    height: auto;
+    width: auto;
+}
+
+.header-idioma {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    color: #1a3a6b;
+}
+
+.selector-idioma {
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    color: #1a3a6b;
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+/* ── CUERPO PRINCIPAL ─────────────────────────────────────────── */
+.dashboard-cuerpo {
+    flex: 1;
+    background-color: #1a3a6b;
+    padding: 40px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    border-radius: 12px;
+}
+
+/* ── TARJETAS DE ACCIÓN ───────────────────────────────────────── */
+.seccion-acciones {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.tarjeta-accion {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.tarjeta-accion:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+.tarjeta-accion:active {
+    transform: translateY(-1px);
+}
+
+.tarjeta-icono {
+    color: #1a3a6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tarjeta-titulo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1a3a6b;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.tarjeta-subtitulo {
+    font-size: 0.8rem;
+    color: #6b82a8;
+    text-align: center;
+}
+
+/* ── SECCIÓN DE TABLA ─────────────────────────────────────────── */
+.seccion-tabla {
+    background-color: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.tabla-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 24px 16px;
+    color: #1a3a6b;
+    border-bottom: 1px solid #eef1f6;
+}
+
+.tabla-titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a3a6b;
+    margin: 0;
+}
+
+.icono-tabla {
+    color: #1a3a6b;
+    display: flex;
+}
+
+/* ── TABLA ────────────────────────────────────────────────────── */
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+.tabla-datos {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla-datos thead tr {
+    border-bottom: 2px solid #eef1f6;
+}
+
+.tabla-datos th {
+    padding: 12px 24px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8fa3bf;
+    text-align: left;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.tabla-fila {
+    border-bottom: 1px solid #eef1f6;
+    transition: background-color 0.1s;
+}
+
+.tabla-fila:hover {
+    background-color: #f7f9fc;
+}
+
+.tabla-datos td {
+    padding: 14px 24px;
+    font-size: 0.875rem;
+    color: #2d4060;
+}
+
+.tabla-vacia {
+    text-align: center;
+    color: #8fa3bf;
+    font-size: 0.9rem;
+    padding: 40px !important;
+}
+
+/* ── BADGES DE ESTADO ─────────────────────────────────────────── */
+.badge-estado {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.estado-pendiente {
+    background-color: #fef9c3;
+    color: #92711a;
+}
+
+.estado-aprobado {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.estado-rechazado {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.estado-default {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* ── PAGINACIÓN ───────────────────────────────────────────────── */
+.paginacion-contenedor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-top: 1px solid #eef1f6;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.selector-filas {
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    color: #2d4060;
+    cursor: pointer;
+    background-color: #ffffff;
+}
+
+.paginacion-info {
+    font-size: 0.85rem;
+    color: #8fa3bf;
+}
+
+.paginacion-botones {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-pagina {
+    background: none;
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+    color: #1a3a6b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    background-color: #eef1f6;
+}
+
+.btn-pagina:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+* ── BANNER DE NOTIFICACIÓN ───────────────────────────────────── */
+.banner-notif {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    animation: bannerEntrar 0.3s ease-out;
+}
+
+@keyframes bannerEntrar {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner-exito {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.banner-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.banner-icono {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.banner-texto {
+    flex: 1;
+}
+
+.banner-cerrar {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: opacity 0.15s;
+}
+
+    .banner-cerrar:hover {
+        opacity: 1;
+    }

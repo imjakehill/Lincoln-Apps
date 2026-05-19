@@ -1,0 +1,351 @@
+@page "/home"
+@rendermode InteractiveServer
+@inject NotificationService Notif
+@inject NavigationManager Nav
+@inject SesionService Sesion
+@inject RequerimientoService ReqService
+
+@* ═══════════════════════════════════════════════════════════════
+   Dashboard.razor — Pantalla principal post-login
+   
+   ESTRUCTURA:
+   ├── Header        (usuario, logo, idioma)
+   ├── Acciones      (3 tarjetas de navegación)
+   └── Tabla         (últimas solicitudes pendientes)
+   ═══════════════════════════════════════════════════════════════ *@
+
+<PageTitle>Lincoln — Dashboard</PageTitle>
+
+<div class="dashboard-completo">
+
+    @* ── HEADER ─────────────────────────────────────────────── *@
+    <header class="dashboard-header">
+
+        @* Usuario logueado — TODO: reemplazar con variable de sesión *@
+        <div class="header-usuario">
+            <span class="icono-usuario">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                     fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10c-2.029 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+            </span>
+            @* TODO: Bindear con el nombre del usuario autenticado *@
+            <span class="nombre-usuario">@NombreUsuario.ToUpper()</span>
+        </div>
+
+        @* Logo central *@
+        <div class="header-logo">
+            <img src="/Assets/logoLincoln.jpg" alt="Logo Lincoln" class="logo-img" />
+        </div>
+
+        @* Selector de idioma *@
+        <div class="header-idioma">
+            <span class="icono-traducir">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                     fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+                    <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14v-.88h-3v-.73h-.89v.73h-3v.88h1.185c.351.998.85 1.909 1.504 2.648-.315.283-.655.54-1.022.767z"/>
+                </svg>
+            </span>
+            @* TODO: Bindear con lógica de cambio de idioma si se implementa *@
+            <select class="selector-idioma" @bind="IdiomaSeleccionado">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+
+    </header>
+
+    @* ── CUERPO PRINCIPAL ────────────────────────────────────── *@
+    <main class="dashboard-cuerpo">
+        @if (Notif.Activa)
+        {
+            <div class="banner-notif banner-@(Notif.Tipo == TipoNotificacion.Exito ? "exito" : "error")">
+                <span class="banner-icono">
+                    @if (Notif.Tipo == TipoNotificacion.Exito)
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
+                        </svg>
+                    }
+                </span>
+                <span class="banner-texto">@Notif.Mensaje</span>
+                <button class="banner-cerrar" @onclick="Notif.Limpiar">✕</button>
+            </div>
+        }
+        @* ── TARJETAS DE ACCIÓN ──────────────────────────────── *@
+        <section class="seccion-acciones">
+
+            @* Tarjeta 1: Nuevo Requerimiento *@
+            @* TODO: @onclick navegar a la página de nuevo requerimiento *@
+            <button class="tarjeta-accion" @onclick="IrNuevoRequerimiento">
+                <span class="tarjeta-icono">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                         fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                </span>
+                <span class="tarjeta-titulo">NUEVO REQUERIMIENTO</span>
+                <span class="tarjeta-subtitulo">Cargar una nueva solicitud</span>
+            </button>
+
+            @* Tarjeta 2: Consultar Requerimientos *@
+            @* TODO: @onclick navegar a la página de consulta *@
+            <button class="tarjeta-accion" @onclick="IrConsultarRequerimientos">
+                <span class="tarjeta-icono">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                         fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" />
+                        <path transform="translate(3,3) scale(0.5)" d="M11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19C12.8487 19 14.551 18.3729 15.9056 17.3199L19.2929 20.7071C19.6834 21.0976 20.3166 21.0976 20.7071 20.7071C21.0976 20.3166 21.0976 19.6834 20.7071 19.2929L17.3199 15.9056C18.3729 14.551 19 12.8487 19 11C19 6.58172 15.4183 3 11 3ZM5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11Z" />
+                    </svg>
+                </span>
+                <span class="tarjeta-titulo">CONSULTAR REQUERIMIENTOS</span>
+                <span class="tarjeta-subtitulo">Revisar estado, historial y seguimiento</span>
+            </button>
+
+            @* Tarjeta 3: Descarga de Información *@
+            @* TODO: @onclick navegar a la página de reportes/exportación *@
+            <button class="tarjeta-accion" @onclick="IrDescargaInformacion">
+                <span class="tarjeta-icono">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                         fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                </span>
+                <span class="tarjeta-titulo">DESCARGA DE INFORMACIÓN</span>
+                <span class="tarjeta-subtitulo">Exportar reportes</span>
+            </button>
+
+        </section>
+
+        @* ── TABLA DE SOLICITUDES PENDIENTES ─────────────────── *@
+        <section class="seccion-tabla">
+
+            @* Título de sección *@
+            <div class="tabla-encabezado">
+                <span class="icono-tabla">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                         fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11z"/>
+                        <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954z"/>
+                    </svg>
+                </span>
+                <h2 class="tabla-titulo">Últimas solicitudes pendientes</h2>
+            </div>
+
+            @* Contenedor de la tabla *@
+            <div class="tabla-contenedor">
+                <table class="tabla-datos">
+
+                    @* Encabezados de columna *@
+                    <thead>
+                        <tr>
+                            <th>N° REQUERIMIENTO</th>
+                            <th>BUDGET</th>
+                            <th>TIPO DE PEDIDO</th>
+                            <th>FECHA CREACIÓN</th>
+                            <th>FECHA REQUERIDA</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (CargandoSolicitudes)
+                        {
+                            <tr>
+                                <td colspan="6" class="tabla-vacia">Cargando...</td>
+                            </tr>
+                        }
+                        else if (Solicitudes.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="6" class="tabla-vacia">Sin solicitudes pendientes</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var fila in SolicitudesPaginadas)
+                            {
+                                <tr class="tabla-fila">
+                                    <td>@fila.NroTrans</td>
+                                    <td>@(string.IsNullOrWhiteSpace(fila.Budget) ? "—" : fila.Budget)</td>
+                                    <td>@fila.TipoPedido</td>
+                                    <td>@(fila.FechaRegistro?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(fila.FechaRequerida?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        <span class="badge-estado @ObtenerClaseEstado(fila.EstadoLegible)">
+                                            @fila.EstadoLegible
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+            @* ── PAGINACIÓN ──────────────────────────────────── *@
+            <div class="paginacion-contenedor">
+
+                @* Selector de filas por página *@
+                <div class="paginacion-filas">
+                    <select class="selector-filas" @bind="FilasPorPagina" @bind:after="OnFilasPorPaginaChange">
+                        <option value="4">4 rows</option>
+                        <option value="10">10 rows</option>
+                        <option value="25">25 rows</option>
+                        <option value="50">50 rows</option>
+                    </select>
+                </div>
+
+                @* Info de registros *@
+                <span class="paginacion-info">
+                    @PaginaInicio–@PaginaFin of @TotalRegistros
+                </span>
+
+                @* Botones de navegación *@
+                <div class="paginacion-botones">
+                    <button class="btn-pagina" @onclick="PrimeraPagina"
+                            disabled="@(PaginaActual == 1 || CargandoSolicitudes)">«</button>
+                    <button class="btn-pagina" @onclick="PaginaAnterior"
+                            disabled="@(PaginaActual == 1 || CargandoSolicitudes)">&lt</button>
+                    <button class="btn-pagina" @onclick="PaginaSiguiente"
+                            disabled="@(PaginaActual >= TotalPaginas || CargandoSolicitudes)">&gt</button>
+                    <button class="btn-pagina" @onclick="UltimaPagina"
+                            disabled="@(PaginaActual >= TotalPaginas || CargandoSolicitudes)">»</button>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+@code {
+
+    // ── Variables de UI ───────────────────────────────────────
+    private string NombreUsuario => Sesion?.userName ?? string.Empty;
+    private string IdiomaSeleccionado { get; set; } = "es";
+
+    // ── Datos (cargados desde TRANSAC vía RequerimientoService) ──
+    private List<Requerimiento> Solicitudes  { get; set; } = new();
+    private int  TotalRegistros              { get; set; } = 0;
+    private bool CargandoSolicitudes         { get; set; } = true;
+
+    // ── Paginación (lazy: trae solo la página actual desde SQL) ──
+    private int PaginaActual   { get; set; } = 1;
+    private int FilasPorPagina { get; set; } = 4;
+
+    private int TotalPaginas => Math.Max(1, (int)Math.Ceiling((double)TotalRegistros / FilasPorPagina));
+    private int PaginaInicio => TotalRegistros == 0 ? 0 : (PaginaActual - 1) * FilasPorPagina + 1;
+    private int PaginaFin    => Math.Min(PaginaActual * FilasPorPagina, TotalRegistros);
+
+    private IEnumerable<Requerimiento> SolicitudesPaginadas => Solicitudes;
+
+    private async Task CargarSolicitudesAsync()
+    {
+        CargandoSolicitudes = true;
+        StateHasChanged();
+
+        try
+        {
+            var (items, total) = await ReqService.GetUltimasPendientesAsync(PaginaActual, FilasPorPagina);
+            Solicitudes    = items;
+            TotalRegistros = total;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR Home] {ex}");
+            Solicitudes    = new();
+            TotalRegistros = 0;
+        }
+
+        CargandoSolicitudes = false;
+        StateHasChanged();
+    }
+
+    private async Task PrimeraPagina()
+    {
+        if (PaginaActual == 1) return;
+        PaginaActual = 1;
+        await CargarSolicitudesAsync();
+    }
+
+    private async Task UltimaPagina()
+    {
+        if (PaginaActual >= TotalPaginas) return;
+        PaginaActual = TotalPaginas;
+        await CargarSolicitudesAsync();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (PaginaActual <= 1) return;
+        PaginaActual--;
+        await CargarSolicitudesAsync();
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (PaginaActual >= TotalPaginas) return;
+        PaginaActual++;
+        await CargarSolicitudesAsync();
+    }
+
+    private async Task OnFilasPorPaginaChange()
+    {
+        PaginaActual = 1;
+        await CargarSolicitudesAsync();
+    }
+
+    // ── Helpers de UI ─────────────────────────────────────────
+    private string ObtenerClaseEstado(string estado) => estado.ToUpper() switch
+    {
+        "PENDIENTE"  => "estado-pendiente",
+        "AUTORIZADO" => "estado-aprobado",
+        "APROBADO"   => "estado-aprobado",
+        "RECHAZADO"  => "estado-rechazado",
+        _            => "estado-default"
+    };
+
+    // ── Navegación ────────────────────────────────────────────
+    private void IrNuevoRequerimiento() => Nav.NavigateTo("/createreq");
+    private void IrConsultarRequerimientos() => Nav.NavigateTo("/viewreq");
+    private void IrDescargaInformacion() => Debug.WriteLine("→ Descarga de Información"); // TODO
+
+    // ── Ciclo de vida ─────────────────────────────────────────
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!Sesion.isAuthenticated)
+            {
+                Nav.NavigateTo("/login", replace: true);
+                return;
+            }
+
+            await CargarSolicitudesAsync();
+
+            if (Notif.Activa)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(5000);
+                    Notif.Limpiar();
+                    await InvokeAsync(StateHasChanged);
+                });
+            }
+        }
+    }
+}

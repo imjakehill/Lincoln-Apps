@@ -1,0 +1,222 @@
+﻿/* Reset básico para esta página */
+.pagina-completa {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+.encabezado {
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.logo-img {
+    height: auto;
+    width: auto;
+}
+
+/* ── FONDO PRINCIPAL ─────────────────────────── */
+.fondo-principal {
+    flex: 1;
+    background-color: #f0f2f5; /* gris claro de fondo de página */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+/* Contenedor azul redondeado que envuelve la card */
+.fondo-azul {
+    background-color: #1a3a6b;
+    border-radius: 28px;
+    padding: 56px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 620px;
+    box-shadow: 0 20px 60px rgba(26, 58, 107, 0.45), 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ── CARD ────────────────────────────────────── */
+.card-login {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.titulo-login {
+    text-align: center;
+    color: #1a6fbf;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+/* ── CAMPOS ──────────────────────────────────── */
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.etiqueta {
+    font-size: 0.9rem;
+    color: #444;
+    font-weight: 500;
+}
+
+.entrada {
+    border: 1.5px solid #1a6fbf;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    outline: none;
+    color: #222;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .entrada:focus {
+        border-color: #1a3a6b;
+        box-shadow: 0 0 0 3px rgba(26, 111, 191, 0.15);
+    }
+
+/* ── CONTRASEÑA CON OJO ──────────────────────── */
+.contenedor-contrasena {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #1a6fbf;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+    .contenedor-contrasena:focus-within {
+        border-color: #1a3a6b;
+        box-shadow: 0 0 0 3px rgba(26, 111, 191, 0.15);
+    }
+
+.entrada-contrasena {
+    border: none !important;
+    box-shadow: none !important;
+    flex: 1;
+    border-radius: 0;
+}
+
+.boton-ojo {
+    background: none;
+    border: none;
+    border-left: 1.5px solid #1a6fbf;
+    padding: 0 12px;
+    cursor: pointer;
+    color: #1a6fbf;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-height: 42px;
+    transition: background-color 0.15s;
+}
+
+    .boton-ojo:hover {
+        background-color: #f0f6ff;
+    }
+
+/* ── RECORDARME ──────────────────────────────── */
+.fila-recordar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-recordar {
+    width: 18px;
+    height: 18px;
+    accent-color: #1a6fbf;
+    cursor: pointer;
+}
+
+.label-recordar {
+    font-size: 0.95rem;
+    color: #444;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ── ERROR ───────────────────────────────────── */
+.mensaje-error {
+    color: #c0392b;
+    font-size: 0.875rem;
+    background-color: #fdecea;
+    border: 1px solid #f5c6c2;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 0;
+}
+
+/* ── BOTÓN PRINCIPAL ─────────────────────────── */
+.boton-login {
+    background-color: #1a3a6b;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 13px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+    .boton-login:hover:not(:disabled) {
+        background-color: #15305a;
+    }
+
+    .boton-login:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    .boton-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* ── FOOTER ──────────────────────────────────── */
+.pie-pagina {
+    background-color: #1a3a6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+}
+
+.icono-globo {
+    opacity: 0.85;
+}
+
+.selector-idioma {
+    background-color: #ffffff;
+    color: #1a3a6b;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+}

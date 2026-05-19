@@ -1,0 +1,362 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@inject SesionService Sesion
+@inject IHttpClientFactory HttpFactory
+@inject LanguageService Lang
+@implements IDisposable
+
+<PageTitle>@Lang.T("login.page_title")</PageTitle>
+
+<!-- ═══════════════════════════════════════════════════
+     ESTRUCTURA DE LA PÁGINA
+     ═══════════════════════════════════════════════════ -->
+
+<div class="pagina-completa">
+
+    <!-- HEADER -->
+    <header class="encabezado">
+        <img src="/Assets/logoLincoln.jpg" alt="Logo Lincoln" class="logo-img" />
+    </header>
+
+    <!-- FONDO AZUL + CARD CENTRADA -->
+    <main class="fondo-principal">
+        <div class="fondo-azul">
+
+        <div class="card-login">
+
+            <h2 class="titulo-login">@Lang.T("login.heading")</h2>
+
+            <!-- CAMPO USUARIO -->
+            <div class="campo">
+                <label class="etiqueta" for="inputUsuario">@Lang.T("login.username")</label>
+                <input id="inputUsuario"
+                       class="entrada"
+                       type="text"
+                       placeholder=""
+                       @bind="Usuario"
+                       @bind:event="oninput"
+                       @onkeydown=@(e => { if (e.Key == "Enter") TryIniciarSesion(); }) />
+            </div>
+
+            <!-- CAMPO CONTRASEÑA
+                 ══════════════════════════════════════════════════════════════
+                 CÓMO FUNCIONA EL BINDING EN BLAZOR:
+
+                 @bind="Variable"          Une el <input> a una variable C#.
+                                           Si el usuario escribe → la variable se actualiza.
+                                           Si la variable cambia en C# → el input se actualiza.
+                                           Es un enlace de DOS VÍAS (va y vuelve).
+
+                 @bind:event="oninput"     Por defecto @bind actualiza al salir del campo.
+                                           Con "oninput" actualiza en cada tecla presionada.
+
+                 @onclick="Metodo"         Llama al método C# cuando se hace click.
+
+                 @if (condicion) { }       Renderiza o borra elementos del HTML
+                                           según el valor de una variable C#.
+
+                 PROBLEMA del ojo:
+                 El browser NO permite cambiar type="password" → type="text"
+                 en el mismo <input> una vez creado en el DOM.
+                 SOLUCIÓN: dos <input> separados, Blazor destruye uno y crea el otro.
+                 ══════════════════════════════════════════════════════════════ -->
+            <div class="campo">
+                <label class="etiqueta" for="inputContrasena">@Lang.T("login.password")</label>
+                <div class="contenedor-contrasena">
+
+                    @if (MostrarContrasena)
+                    {
+                        <!-- @key le dice a Blazor que este elemento es DISTINTO al de abajo.
+                             Sin @key, Blazor ve "un input en la misma posición" y trata de
+                             actualizarlo (sin poder cambiar el type). Con @key lo destruye
+                             y crea uno nuevo, logrando el cambio de type correctamente. -->
+                        <input @key="@("input-visible")"
+                               class="entrada entrada-contrasena"
+                               type="text"
+                               @bind="Contrasena"
+                               @bind:event="oninput"
+                               @onkeydown=@(e => { if (e.Key == "Enter") TryIniciarSesion(); }) />
+                    }
+                    else
+                    {
+                        <input @key="@("input-oculto")"
+                               class="entrada entrada-contrasena"
+                               type="password"
+                               @bind="Contrasena"
+                               @bind:event="oninput"
+                               @onkeydown=@(e => { if (e.Key == "Enter") TryIniciarSesion(); }) />
+                    }
+
+                    <button class="boton-ojo"
+                            type="button"
+                            @onclick="ToggleMostrarContrasena"
+                            title="@Lang.T("login.toggle_password")">
+                        @if (MostrarContrasena)
+                        {
+                            <!-- Ojo ABIERTO: contraseña visible -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                 fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173
+                                         8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8
+                                         3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1
+                                         14.828 8c-.058.087-.122.183-.195.288-.335.48-.83
+                                         1.12-1.465 1.755C11.879 11.332 10.119 12.5 8
+                                         12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0
+                                         1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5
+                                         3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <!-- Ojo CERRADO: contraseña oculta -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                 fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028
+                                         7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8
+                                         3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1
+                                         14.828 8c-.058.087-.122.183-.195.288-.335.48-.83
+                                         1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                                <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5
+                                         2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5
+                                         3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829
+                                         2.829z"/>
+                                <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0
+                                         1.172 8l.195.288c.335.48.83 1.12 1.465
+                                         1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0
+                                         1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8
+                                         13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709
+                                         zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                            </svg>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <!-- RECORDARME -->
+            <div class="fila-recordar">
+                <input id="chkRecordar"
+                       type="checkbox"
+                       class="checkbox-recordar"
+                       @bind="Recordarme" />
+                <label for="chkRecordar" class="label-recordar">@Lang.T("login.remember")</label>
+            </div>
+
+            <!-- MENSAJE DE ERROR (oculto hasta que haya error) -->
+            @if (!string.IsNullOrEmpty(MensajeError))
+            {
+                <p class="mensaje-error">@MensajeError</p>
+            }
+
+            <!-- BOTÓN INICIAR SESIÓN -->
+            <button class="boton-login"
+                    type="button"
+                    @onclick="TryIniciarSesion"
+                    disabled="@Cargando">
+                @if (Cargando)
+                {
+                    <span>@Lang.T("login.loading")</span>
+                }
+                else
+                {
+                    <span>@Lang.T("login.button")</span>
+                }
+            </button>
+
+        </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER CON SELECTOR DE IDIOMA -->
+    <footer class="pie-pagina">
+        <!-- Ícono globo -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+             fill="white" viewBox="0 0 16 16" class="icono-globo">
+            <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm7.5-6.923c-.67.204-1.335.82-1.887
+                     1.855A7.97 7.97 0 0 0 5.145 4H7.5V1.077zM4.09 4a9.267 9.267 0 0
+                     1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.025 7.025 0 0 0 2.255
+                     4H4.09zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.958 6.958 0 0
+                     0-.656 2.5h2.49zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847zM8.5
+                     5v2.5h2.99a12.495 12.495 0 0 0-.337-2.5H8.5zM4.51 8.5a12.5 12.5 0 0
+                     0 .337 2.5H7.5V8.5H4.51zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5z
+                     M5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887
+                     1.855V12H5.145zm.182 2.472a6.696 6.696 0 0 1-.597-.933A9.268 9.268 0 0 1
+                     4.09 12H2.255a7.024 7.024 0 0 0 3.072 2.472zM3.82 11a13.652 13.652 0 0
+                     1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82zm6.853 3.472A7.024 7.024
+                     0 0 0 13.745 12H11.91a9.27 9.27 0 0 1-.64 1.539 6.688 6.688 0 0
+                     1-.597.933zM8.5 12v1.923c.67-.204 1.335-.82 1.887-1.855.173-.324.33-.682.468-1.068H8.5z
+                     m3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.65 13.65 0 0
+                     1-.312 2.5zm2.802-3.5a6.959 6.959 0 0 0-.656-2.5H12.18c.174.782.282
+                     1.623.312 2.5h2.49zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.024
+                     7.024 0 0 0-3.072-2.472c.218.284.418.598.597.933zM10.855 4a7.966 7.966
+                     0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4h2.355z"/>
+        </svg>
+
+        <select class="selector-idioma" value="@Lang.Idioma" @onchange="OnIdiomaChange">
+            <option value="es">Español</option>
+            <option value="en">English</option>
+        </select>
+    </footer>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     LÓGICA C# — VARIABLES LISTAS PARA BINDEAR
+     ═══════════════════════════════════════════════════ -->
+@code {
+
+    public string _connectionStringFromAppSettings;
+
+    // ── Campos del formulario ──────────────────────
+    private string Usuario = string.Empty;
+    private string Contrasena = string.Empty;
+    private bool Recordarme = false;
+
+    // ── Estado de la UI ───────────────────────────
+    private bool MostrarContrasena = false;
+    private bool Cargando = false;
+    private string MensajeError = string.Empty;
+
+    // ── Idioma ────────────────────────────────────
+    protected override void OnInitialized()
+    {
+        Lang.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Lang.OnChange -= StateHasChanged;
+    }
+
+    private void OnIdiomaChange(ChangeEventArgs e)
+    {
+        Lang.SetIdioma(e.Value?.ToString() ?? "es");
+    }
+
+    // Alterna entre mostrar texto o puntos en la contraseña
+
+    private void ToggleMostrarContrasena()
+    {
+        MostrarContrasena = !MostrarContrasena;
+        StateHasChanged();
+    }
+
+    public string getConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
+        _connectionStringFromAppSettings = config.GetConnectionString("Lincoln")!;
+        return _connectionStringFromAppSettings;
+    }
+
+    // Clase para Token
+
+    private class TokenResponse
+    {
+        public string access_token { get; set; } = string.Empty;
+        public string token_type { get; set; } = string.Empty;
+        public int expires_in { get; set; }
+        public string refresh_token { get; set; } = string.Empty;
+    }
+
+    private async Task<TokenResponse?> ObtenerToken()
+    {
+        var client = HttpFactory.CreateClient();
+
+        // Construye el form-data exactamente como el curl
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent("password"),  "grant_type"    },
+            { new StringContent("api"),       "client_id"     },
+            { new StringContent("secret"),    "client_secret" },
+            { new StringContent(""),          "refresh_token" },
+            { new StringContent(Usuario),     "username"      },
+            { new StringContent(Contrasena),  "password"      }
+        };
+
+        try
+        {
+            // TODO: mover la URL base a appsettings.json
+            var response = await client.PostAsync("http://localhost:5001/auth/token", form);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            return System.Text.Json.JsonSerializer.Deserialize<TokenResponse>(json);
+        }
+        catch
+        {
+            return null;
+        }
+
+        /**
+         * string query = "SELECT COUNT(1) FROM Usuarios WHERE username = @usuario";
+         *
+        using var connection = new SqlConnection(getConnectionString());
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@usuario", Usuario);
+        int resultCount = (int)(await command.ExecuteScalarAsync())!;
+
+        connection.Close();
+
+        return resultCount == 1;
+        **/
+    }
+
+    private async Task TryIniciarSesion()
+    {
+        AppHelper apphelper = new AppHelper();
+        MensajeError = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(Usuario) || string.IsNullOrWhiteSpace(Contrasena))
+        {
+            MensajeError = Lang.T("login.error_empty");
+            return;
+        }
+
+        Cargando = true;
+        StateHasChanged();
+        await Task.Yield();
+
+        apphelper.GenerateLog("info", $"Intentando login con Usuario:'{Usuario}' (Recordarme:{Recordarme})");
+
+        TokenResponse? tokenResponse = null;
+
+        try
+        {
+            tokenResponse = await ObtenerToken();
+        }
+        catch (Exception ex)
+        {
+            MensajeError = $"{Lang.T("login.error_connection")}: {ex.Message}";
+            apphelper.GenerateLog("error", $"Excepción en login: {ex.Message}");
+            Cargando = false;
+            StateHasChanged();
+            await Task.Yield();
+            return;
+        }
+
+        if (tokenResponse != null)
+        {
+            // Login exitoso — guardás usuario Y token en la sesión
+            Sesion.logInUser(Usuario, tokenResponse.access_token);
+            apphelper.GenerateLog("info", $"Login exitoso. Usuario: '{Usuario}'");
+            Nav.NavigateTo("/home");
+        }
+        else
+        {
+            apphelper.GenerateLog("warning", $"Login fallido. Usuario: '{Usuario}'");
+            MensajeError = Lang.T("login.error_credentials");
+            Cargando = false;
+            StateHasChanged();
+            await Task.Yield();
+        }
+    }
+}

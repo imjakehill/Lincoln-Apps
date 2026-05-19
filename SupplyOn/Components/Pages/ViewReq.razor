@@ -1,0 +1,638 @@
+@page "/viewreq"
+@rendermode InteractiveServer
+@inject NotificationService Notif
+@inject NavigationManager Nav
+@inject SesionService Sesion
+@inject RequerimientoService ReqService
+
+@* ═══════════════════════════════════════════════════════════════
+   ViewReq.razor — Consulta de requerimientos de compra
+   - Lista paginada (10 por página, lazy desde SQL via OFFSET/FETCH)
+   - Editar (modal inline) y Eliminar (lógico) sólo si NO está autorizado
+   - Misma estética que CreateReq.razor / Home.razor
+   ═══════════════════════════════════════════════════════════════ *@
+
+<PageTitle>Lincoln — Consulta de Requerimientos</PageTitle>
+
+<div class="pagina-completa">
+
+    @* ── HEADER (mismo estilo que las demás pantallas) ─────── *@
+    <header class="vr-header">
+        <div class="header-usuario">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10c-2.029 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+            </svg>
+            <span>@Sesion.userName.ToUpper()</span>
+        </div>
+        <div class="header-logo">
+            <img src="/Assets/logoLincoln.jpg" alt="Logo Lincoln" class="logo-img" />
+        </div>
+        <div class="header-idioma">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+                <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14v-.88h-3v-.73h-.89v.73h-3v.88h1.185c.351.998.85 1.909 1.504 2.648-.315.283-.655.54-1.022.767z"/>
+            </svg>
+            <select class="selector-idioma" @bind="IdiomaSeleccionado">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+    </header>
+
+    @* ── CUERPO AZUL ───────────────────────────────────────── *@
+    <main class="vr-cuerpo">
+
+        @* ── SUBHEADER ──────────────────────────────────────── *@
+        <div class="vr-subheader">
+            <button class="btn-volver-header" @onclick="Volver" title="Volver al inicio">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+            </button>
+            <div class="vr-titulo-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+                    <path d="M4.5 8a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0-2.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4z"/>
+                </svg>
+                <span>Consulta de requerimientos</span>
+            </div>
+            <div class="vr-total-info">
+                <span class="vr-total-label">TOTAL</span>
+                <span class="vr-total-valor">@Total registros</span>
+            </div>
+        </div>
+
+        @* ── BARRA DE FILTROS (colapsable) ───────────────────── *@
+        <div class="vr-filtros-barra">
+            <button class="btn-filtros" @onclick="ToggleFiltros">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+                FILTROS
+                @if (Filtro.CantidadActivos > 0)
+                {
+                    <span class="filtros-badge">@Filtro.CantidadActivos</span>
+                }
+                <span class="filtros-chevron">@(MostrarFiltros ? "▾" : "▸")</span>
+            </button>
+            @if (Filtro.TieneAlgunFiltro)
+            {
+                <button class="btn-filtros-limpiar" @onclick="LimpiarFiltros" disabled="@Cargando">Limpiar filtros</button>
+            }
+        </div>
+
+        @if (MostrarFiltros)
+        {
+            <div class="vr-filtros-panel">
+                <div class="vr-filtros-grid">
+
+                    @* N° Requerimiento (rango) *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">N° Requerimiento (desde)</label>
+                        <input class="filtro-input" type="number" @bind="Filtro.NroTransDesde" placeholder="0" />
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">N° Requerimiento (hasta)</label>
+                        <input class="filtro-input" type="number" @bind="Filtro.NroTransHasta" placeholder="0" />
+                    </div>
+
+                    @* Budget — TODO SQL *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Budget</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Budget" placeholder="Budget Item" />
+                    </div>
+
+                    @* Solicitante — TODO SQL *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Solicitante</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Solicitante" placeholder="Solicitante" />
+                    </div>
+
+                    @* Departamento *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Departamento</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Departamento" placeholder="" />
+                    </div>
+
+                    @* Usuario *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Usuario</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Usuario" placeholder="Usuario que creó" />
+                    </div>
+
+                    @* Prefijo *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Prefijo</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Prefijo" placeholder="0001" />
+                    </div>
+
+                    @* Tipo Pedido *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Tipo de pedido</label>
+                        <select class="filtro-input" @bind="Filtro.TipoPedido">
+                            <option value="">— Todos —</option>
+                            <option value="Urgente">Urgente (≤5 días)</option>
+                            <option value="Media">Media (6–10 días)</option>
+                            <option value="Estandar">Estándar (>10 días)</option>
+                        </select>
+                    </div>
+
+                    @* Estado *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Estado</label>
+                        <select class="filtro-input" @bind="Filtro.Estado">
+                            <option value="">— Todos —</option>
+                            <option value="A">Autorizado</option>
+                            <option value="P">Pendiente</option>
+                        </select>
+                    </div>
+
+                    @* Fechas creación *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Creación (desde)</label>
+                        <input class="filtro-input" type="date" @bind="FCreaDesde" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Creación (hasta)</label>
+                        <input class="filtro-input" type="date" @bind="FCreaHasta" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    @* Fechas requerida *@
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Requerida (desde)</label>
+                        <input class="filtro-input" type="date" @bind="FReqDesde" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Requerida (hasta)</label>
+                        <input class="filtro-input" type="date" @bind="FReqHasta" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    @* Observación (texto libre) *@
+                    <div class="filtro-grupo filtro-grupo-full">
+                        <label class="filtro-label">Observación contiene</label>
+                        <input class="filtro-input" type="text" @bind="Filtro.Observacion" placeholder="Buscar en observación" />
+                    </div>
+
+                </div>
+
+                <div class="vr-filtros-acciones">
+                    <button class="btn-modal-cancelar" @onclick="LimpiarFiltros" disabled="@Cargando">Limpiar</button>
+                    <button class="btn-modal-confirmar" @onclick="AplicarFiltros" disabled="@Cargando">
+                        @(Cargando ? "Buscando..." : "Aplicar")
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* ── BANNER NOTIFICACIÓN ─────────────────────────────── *@
+        @if (Notif.Activa)
+        {
+            <div class="banner-notif banner-@(Notif.Tipo == TipoNotificacion.Exito ? "exito" : "error")">
+                <span class="banner-texto">@Notif.Mensaje</span>
+                <button class="banner-cerrar" @onclick="Notif.Limpiar">✕</button>
+            </div>
+        }
+
+        @* ── TABLA ──────────────────────────────────────────── *@
+        <div class="vr-tabla-contenedor">
+
+            @if (Cargando)
+            {
+                <div class="vr-loading">Cargando requerimientos...</div>
+            }
+            else if (Items.Count == 0)
+            {
+                <div class="vr-loading">Sin requerimientos para mostrar.</div>
+            }
+            else
+            {
+                <div class="vr-tabla-scroll">
+                    <table class="vr-tabla">
+                        <thead>
+                            <tr>
+                                <th>N° REQ</th>
+                                <th>BUDGET</th>
+                                <th>TIPO PEDIDO</th>
+                                <th>FECHA CREACIÓN</th>
+                                <th>FECHA REQUERIDA</th>
+                                <th>DEPARTAMENTO</th>
+                                <th>SOLICITANTE</th>
+                                <th>PREFIJO</th>
+                                <th>USUARIO</th>
+                                <th>OBSERVACIÓN</th>
+                                <th>ESTADO</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Items)
+                            {
+                                <tr>
+                                    <td class="vr-mono">@r.NroTrans</td>
+                                    <td>@(string.IsNullOrWhiteSpace(r.Budget) ? "—" : r.Budget)</td>
+                                    <td>@r.TipoPedido</td>
+                                    <td>@(r.FechaRegistro?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(r.FechaRequerida?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(r.CodDepto) ? "—" : r.CodDepto)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(r.Solicitante) ? "—" : r.Solicitante)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(r.Prefijo) ? "—" : r.Prefijo)</td>
+                                    <td>@r.Usuario</td>
+                                    <td class="vr-obs" title="@r.Observacion">@r.Observacion</td>
+                                    <td>
+                                        <span class="badge-estado @(r.EstaAutorizado ? "estado-aprobado" : "estado-pendiente")">
+                                            @r.EstadoLegible
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="vr-acciones">
+                                            <button class="btn-accion btn-editar"
+                                                    @onclick="() => AbrirEditar(r)"
+                                                    disabled="@r.EstaAutorizado"
+                                                    title="@(r.EstaAutorizado ? "No editable: ya autorizado" : "Editar requerimiento")">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="btn-accion btn-eliminar-fila"
+                                                    @onclick="() => AbrirEliminar(r)"
+                                                    disabled="@r.EstaAutorizado"
+                                                    title="@(r.EstaAutorizado ? "No eliminable: ya autorizado" : "Eliminar requerimiento")">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @* ── PAGINACIÓN ─────────────────────────────────── *@
+            <div class="vr-paginacion">
+                <span class="pag-info">@PaginaInicio–@PaginaFin of @Total</span>
+                <div class="pag-botones">
+                    <button class="btn-pag" @onclick="PrimeraPagina"   disabled="@(PaginaActual==1 || Cargando)">«</button>
+                    <button class="btn-pag" @onclick="PaginaAnterior"  disabled="@(PaginaActual==1 || Cargando)">‹</button>
+                    <span class="pag-actual">@PaginaActual / @TotalPaginas</span>
+                    <button class="btn-pag" @onclick="PaginaSiguiente" disabled="@(PaginaActual>=TotalPaginas || Cargando)">›</button>
+                    <button class="btn-pag" @onclick="UltimaPagina"    disabled="@(PaginaActual>=TotalPaginas || Cargando)">»</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+@* ── MODAL DE EDICIÓN ─────────────────────────────────────────── *@
+@if (MostrarModalEditar && Editando != null)
+{
+    <div class="modal-overlay" @onclick="CerrarEditar">
+        <div class="modal-caja-edit" @onclick:stopPropagation="true">
+            <h3 class="modal-titulo">Editar Requerimiento N° @Editando.NroTrans</h3>
+
+            <div class="modal-form">
+
+                @* Readonly: no se pueden cambiar *@
+                <div class="modal-fila">
+                    <label class="modal-label">N° Requerimiento</label>
+                    <input class="modal-input modal-readonly" type="text" readonly value="@Editando.NroTrans" />
+                </div>
+                <div class="modal-fila">
+                    <label class="modal-label">Budget</label>
+                    <input class="modal-input modal-readonly" type="text" readonly value="@(string.IsNullOrWhiteSpace(Editando.Budget) ? "—" : Editando.Budget)" />
+                </div>
+                <div class="modal-fila">
+                    <label class="modal-label">Rubro</label>
+                    <input class="modal-input modal-readonly" type="text" readonly value="@(string.IsNullOrWhiteSpace(Editando.Rubro) ? "—" : Editando.Rubro)" />
+                </div>
+                <div class="modal-fila">
+                    <label class="modal-label">Subrubro</label>
+                    <input class="modal-input modal-readonly" type="text" readonly value="@(string.IsNullOrWhiteSpace(Editando.Subrubro) ? "—" : Editando.Subrubro)" />
+                </div>
+
+                @* Editables *@
+                <div class="modal-fila">
+                    <label class="modal-label">Fecha Requerida</label>
+                    <input class="modal-input" type="date" @bind="EditandoFechaReq" />
+                </div>
+                <div class="modal-fila">
+                    <label class="modal-label">Prefijo</label>
+                    <input class="modal-input" type="text" @bind="Editando.Prefijo" />
+                </div>
+                <div class="modal-fila">
+                    <label class="modal-label">Solicitante</label>
+                    <input class="modal-input" type="text" @bind="Editando.Solicitante" placeholder="(opcional)" />
+                </div>
+                <div class="modal-fila modal-fila-full">
+                    <label class="modal-label">Observación</label>
+                    <textarea class="modal-input modal-textarea"
+                              @bind="Editando.Observacion"
+                              maxlength="500"
+                              rows="3"></textarea>
+                </div>
+
+            </div>
+
+            <div class="modal-botones">
+                <button class="btn-modal-cancelar" @onclick="CerrarEditar" disabled="@Guardando">Cancelar</button>
+                <button class="btn-modal-confirmar" @onclick="GuardarEdicion" disabled="@Guardando">
+                    @(Guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── MODAL DE ELIMINACIÓN ─────────────────────────────────────── *@
+@if (MostrarModalEliminar && AEliminar != null)
+{
+    <div class="modal-overlay" @onclick="CerrarEliminar">
+        <div class="modal-caja" @onclick:stopPropagation="true">
+            <div class="modal-icono">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </svg>
+            </div>
+            <h3 class="modal-titulo">Eliminar requerimiento</h3>
+            <p class="modal-texto">
+                ¿Confirmás eliminar el requerimiento <strong>N° @AEliminar.NroTrans</strong>?
+                <br />Esta acción marca el registro como eliminado (FLGELI='E').
+            </p>
+            <div class="modal-botones">
+                <button class="btn-modal-cancelar" @onclick="CerrarEliminar" disabled="@Guardando">Cancelar</button>
+                <button class="btn-modal-confirmar btn-modal-peligro" @onclick="ConfirmarEliminar" disabled="@Guardando">
+                    @(Guardando ? "Eliminando..." : "Eliminar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+
+    // ── Estado UI ─────────────────────────────────────────────
+    private string IdiomaSeleccionado { get; set; } = "es";
+    private bool Cargando { get; set; } = true;
+    private bool Guardando { get; set; } = false;
+
+    // ── Filtros ──────────────────────────────────────────────
+    private bool MostrarFiltros { get; set; } = false;
+    private RequerimientoFiltro Filtro { get; set; } = new();
+
+    // Helpers para bindear date-pickers (DateTime? no se puede bindear directo a <input type="date">).
+    private DateTime FCreaDesde
+    {
+        get => Filtro.FechaCreacionDesde ?? default;
+        set => Filtro.FechaCreacionDesde = value == default ? null : value;
+    }
+    private DateTime FCreaHasta
+    {
+        get => Filtro.FechaCreacionHasta ?? default;
+        set => Filtro.FechaCreacionHasta = value == default ? null : value;
+    }
+    private DateTime FReqDesde
+    {
+        get => Filtro.FechaRequeridaDesde ?? default;
+        set => Filtro.FechaRequeridaDesde = value == default ? null : value;
+    }
+    private DateTime FReqHasta
+    {
+        get => Filtro.FechaRequeridaHasta ?? default;
+        set => Filtro.FechaRequeridaHasta = value == default ? null : value;
+    }
+
+    private void ToggleFiltros() => MostrarFiltros = !MostrarFiltros;
+
+    private async Task AplicarFiltros()
+    {
+        PaginaActual = 1;
+		MostrarFiltros = false;
+        await CargarPaginaAsync();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtro.Limpiar();
+        PaginaActual = 1;
+        await CargarPaginaAsync();
+    }
+
+    // ── Datos / paginación ───────────────────────────────────
+    private List<Requerimiento> Items { get; set; } = new();
+    private int Total { get; set; } = 0;
+    private int PaginaActual { get; set; } = 1;
+    private const int FilasPorPagina = 10;
+
+    private int TotalPaginas => Math.Max(1, (int)Math.Ceiling((double)Total / FilasPorPagina));
+    private int PaginaInicio => Total == 0 ? 0 : (PaginaActual - 1) * FilasPorPagina + 1;
+    private int PaginaFin    => Math.Min(PaginaActual * FilasPorPagina, Total);
+
+    // ── Modales ──────────────────────────────────────────────
+    private bool MostrarModalEditar   { get; set; } = false;
+    private bool MostrarModalEliminar { get; set; } = false;
+    private Requerimiento? Editando   { get; set; }
+    private Requerimiento? AEliminar  { get; set; }
+
+    // Helper para el binding del date picker (DateTime? no se puede bindear directo)
+    private DateTime EditandoFechaReq
+    {
+        get => Editando?.FechaRequerida ?? DateTime.Today;
+        set { if (Editando != null) Editando.FechaRequerida = value; }
+    }
+
+    // ── Ciclo de vida ────────────────────────────────────────
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!Sesion.isAuthenticated)
+            {
+                Nav.NavigateTo("/login", replace: true);
+                return;
+            }
+
+            await CargarPaginaAsync();
+        }
+    }
+
+    private async Task CargarPaginaAsync()
+    {
+        Cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var (items, total) = await ReqService.GetPaginaAsync(Filtro, PaginaActual, FilasPorPagina);
+            Items = items;
+            Total = total;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR ViewReq] {ex}");
+            Notif.Mostrar($"No se pudieron cargar los requerimientos. {ex.Message}", TipoNotificacion.Error);
+            Items = new();
+            Total = 0;
+        }
+
+        Cargando = false;
+        StateHasChanged();
+    }
+
+    // ── Paginación ───────────────────────────────────────────
+    private async Task PrimeraPagina()
+    {
+        if (PaginaActual == 1) return;
+        PaginaActual = 1;
+        await CargarPaginaAsync();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (PaginaActual <= 1) return;
+        PaginaActual--;
+        await CargarPaginaAsync();
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (PaginaActual >= TotalPaginas) return;
+        PaginaActual++;
+        await CargarPaginaAsync();
+    }
+
+    private async Task UltimaPagina()
+    {
+        if (PaginaActual >= TotalPaginas) return;
+        PaginaActual = TotalPaginas;
+        await CargarPaginaAsync();
+    }
+
+    // ── Editar ───────────────────────────────────────────────
+    private void AbrirEditar(Requerimiento r)
+    {
+        if (r.EstaAutorizado) return;
+        // Clonar para no contaminar la lista si el usuario cancela
+        Editando = new Requerimiento
+        {
+            NroTrans       = r.NroTrans,
+            Fecha          = r.Fecha,
+            FechaRegistro  = r.FechaRegistro,
+            FechaRequerida = r.FechaRequerida,
+            Prefijo        = r.Prefijo,
+            Usuario        = r.Usuario,
+            Observacion    = r.Observacion,
+            CodDepto       = r.CodDepto,
+            EstadoAut      = r.EstadoAut,
+            Total          = r.Total,
+            FlgEli         = r.FlgEli,
+            Budget         = r.Budget,
+            Solicitante    = r.Solicitante,
+            Rubro          = r.Rubro,
+            Subrubro       = r.Subrubro,
+        };
+        MostrarModalEditar = true;
+    }
+
+    private void CerrarEditar()
+    {
+        MostrarModalEditar = false;
+        Editando = null;
+    }
+
+    private async Task GuardarEdicion()
+    {
+        if (Editando is null || Guardando) return;
+
+        Guardando = true;
+        StateHasChanged();
+
+        bool ok = false;
+        string? err = null;
+        try
+        {
+            ok = await ReqService.ActualizarAsync(Editando);
+        }
+        catch (Exception ex)
+        {
+            err = ex.Message;
+            Debug.WriteLine($"[ERROR GuardarEdicion] {ex}");
+        }
+
+        Guardando = false;
+
+        if (ok)
+        {
+            Notif.Mostrar($"Requerimiento N° {Editando.NroTrans} actualizado.", TipoNotificacion.Exito);
+            MostrarModalEditar = false;
+            Editando = null;
+            await CargarPaginaAsync();
+        }
+        else
+        {
+            Notif.Mostrar($"No se pudo actualizar. {err ?? "El requerimiento podría estar autorizado."}", TipoNotificacion.Error);
+            StateHasChanged();
+        }
+    }
+
+    // ── Eliminar ─────────────────────────────────────────────
+    private void AbrirEliminar(Requerimiento r)
+    {
+        if (r.EstaAutorizado) return;
+        AEliminar = r;
+        MostrarModalEliminar = true;
+    }
+
+    private void CerrarEliminar()
+    {
+        MostrarModalEliminar = false;
+        AEliminar = null;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        if (AEliminar is null || Guardando) return;
+
+        Guardando = true;
+        StateHasChanged();
+
+        bool ok = false;
+        string? err = null;
+        try
+        {
+            ok = await ReqService.EliminarAsync(AEliminar.NroTrans);
+        }
+        catch (Exception ex)
+        {
+            err = ex.Message;
+            Debug.WriteLine($"[ERROR ConfirmarEliminar] {ex}");
+        }
+
+        Guardando = false;
+
+        if (ok)
+        {
+            Notif.Mostrar($"Requerimiento N° {AEliminar.NroTrans} eliminado.", TipoNotificacion.Exito);
+            MostrarModalEliminar = false;
+            AEliminar = null;
+
+            // Si la página queda vacía y no es la primera, retroceder una.
+            if (Items.Count == 1 && PaginaActual > 1)
+                PaginaActual--;
+
+            await CargarPaginaAsync();
+        }
+        else
+        {
+            Notif.Mostrar($"No se pudo eliminar. {err ?? "El requerimiento podría estar autorizado."}", TipoNotificacion.Error);
+            StateHasChanged();
+        }
+    }
+
+    // ── Navegación ───────────────────────────────────────────
+    private void Volver() => Nav.NavigateTo("/home");
+}

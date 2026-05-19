@@ -1,0 +1,701 @@
+@page "/createreq"
+@rendermode InteractiveServer
+@inject NotificationService Notif
+@inject NavigationManager Nav
+@inject SesionService Sesion
+@inject BasApiClient BasApi
+@inject RequerimientoService ReqService
+@using System.Diagnostics
+
+@* ═══════════════════════════════════════════════════════════════
+   CreateReq.razor — Formulario de carga de requerimiento (RQ)
+
+   ESTRUCTURA:
+   ├── Header          (usuario, logo, idioma)
+   ├── Subheader       (N° req, título, estado)
+   ├── Campos header   (Budget, Fecha, Solicitante, Prefijo, etc.)
+   ├── Tabla de ítems  (con paginación, máx 3 filas visibles)
+   ├── Footer          (VOLVER / HECHO)
+   └── Modal           (confirmación al presionar HECHO)
+   ═══════════════════════════════════════════════════════════════ *@
+
+<PageTitle>Lincoln — Carga de Requerimiento</PageTitle>
+
+<div class="pagina-completa">
+
+    @* ── HEADER ─────────────────────────────────────────────── *@
+    <header class="cr-header">
+        <div class="header-usuario">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10c-2.029 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+            </svg>
+            <span>@Sesion.userName.ToUpper()</span>
+        </div>
+        <div class="header-logo">
+            <img src="/Assets/logoLincoln.jpg" alt="Logo Lincoln" class="logo-img" />
+        </div>
+        <div class="header-idioma">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286H4.545zm1.634-.736L5.5 3.956h-.049l-.679 2.022H6.18z"/>
+                <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm7.138 9.995c.193.301.402.583.63.846-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14v-.88h-3v-.73h-.89v.73h-3v.88h1.185c.351.998.85 1.909 1.504 2.648-.315.283-.655.54-1.022.767z"/>
+            </svg>
+            <select class="selector-idioma" @bind="IdiomaSeleccionado">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+    </header>
+
+    @* ── CUERPO AZUL ─────────────────────────────────────────── *@
+    <main class="cr-cuerpo">
+
+        @* ── SUBHEADER: N° req / título / estado ─────────────── *@
+        <div class="cr-subheader">
+            <div class="req-numero">
+                <span class="req-label">Requerimiento N°</span>
+                <span class="req-valor">@NroRequerimiento</span>
+            </div>
+            <div class="req-titulo-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+                    <path d="M4.5 8a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0-2.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7zm0 5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4z"/>
+                </svg>
+                <span>Carga de requerimiento</span>
+            </div>
+            <div class="req-estado">
+                <span class="estado-label">Estado</span>
+                <span class="estado-badge">En proceso</span>
+            </div>
+        </div>
+
+        @* ── CAMPOS DEL FORMULARIO ────────────────────────────── *@
+        <div class="cr-campos">
+
+            @* Columna izquierda *@
+            <div class="campos-col">
+
+                @* NOTA: Budget se movió a la tabla de ítems (1 budget por ítem). *@
+
+                @* Solicitante — texto libre, no obligatorio (referencia adicional) *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Solicitante</label>
+                    <input class="campo-input"
+                           type="text"
+                           @bind="Solicitante"
+                           @bind:event="oninput"
+                           placeholder="Ingrese solicitante" />
+                </div>
+
+                @* Departamento — viene del usuario logueado, no editable.
+                   TODO SQL: SELECT depto FROM Usuarios WHERE username=@Sesion.userName *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Departamento</label>
+                    <input class="campo-input campo-readonly"
+                           type="text"
+                           value="@Departamento"
+                           readonly
+                           placeholder="(viene del usuario)" />
+                </div>
+
+            </div>
+
+            @* Columna central *@
+            <div class="campos-col">
+
+                @* Fecha Requerida — date picker, obligatorio, sin fechas pasadas *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Fecha Requerida *</label>
+                    <input class="campo-input campo-fecha"
+                           type="date"
+                           @bind="FechaRequerida"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+
+                @* Prefijo — editable *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Prefijo</label>
+                    <input class="campo-input"
+                           type="text"
+                           @bind="Prefijo"
+                           @bind:event="oninput"
+                           placeholder="Ingrese prefijo" />
+                </div>
+
+                @* Tipo de pedido — read-only, calculado desde Fecha Requerida.
+                   Regla: <=5 dias Urgente, 6-10 Media, >10 Standard *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Tipo de pedido</label>
+                    <input class="campo-input campo-readonly"
+                           type="text"
+                           value="@TipoPedido"
+                           readonly />
+                </div>
+
+            </div>
+
+            @* Columna derecha *@
+            <div class="campos-col campos-col-derecha">
+
+                @* Observación — textarea, opcional, máx 500 *@
+                <div class="campo-grupo campo-grupo-obs">
+                    <label class="campo-label">Observación del RQ.</label>
+                    <textarea class="campo-textarea"
+                              @bind="Observacion"
+                              @bind:event="oninput"
+                              maxlength="500"
+                              placeholder="Ingrese observaciones"
+                              rows="4"></textarea>
+                </div>
+
+                @* Autorización adjunta — placeholder visual.
+                   TODO: implementar InputFile con validación pdf/jpg/png *@
+                <div class="campo-grupo">
+                    <label class="campo-label">Autorización adjunta</label>
+                    <div class="campo-adjunto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                        </svg>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        @* ── TABLA DE ÍTEMS ───────────────────────────────────── *@
+        <div class="cr-tabla-contenedor">
+
+            @* Encabezado de tabla con botón + *@
+            <div class="tabla-topbar">
+                <button class="btn-agregar" @onclick="AgregarFila" title="Agregar ítem">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                </button>
+                <span class="tabla-col-header">COD ITEM</span>
+                <span class="tabla-col-header">BUDGET</span>
+                <span class="tabla-col-header">RUBRO</span>
+                <span class="tabla-col-header">SUBRUBRO</span>
+                <span class="tabla-col-header">CANTIDAD</span>
+                <span class="tabla-col-header">U. DE MEDIDA</span>
+                <span class="tabla-col-header">CANTIDAD U.D.M.</span>
+                <span class="tabla-col-header">ARCH. ADJUNTO</span>
+                <span class="tabla-col-header">PROVEEDOR SUG.</span>
+                <span class="tabla-col-header">OBSERVACIÓN ÍTEM</span>
+                <span class="tabla-col-header"></span>
+            </div>
+
+            @* Filas paginadas (máx 3 visibles) *@
+            @foreach (var fila in FilasPaginadas)
+            {
+                <div class="tabla-fila" @onkeydown="OnFilaKeyDown">
+
+                    @* ITEM — número correlativo, solo lectura *@
+                    <input class="celda-input celda-readonly" type="text"
+                           value="@fila.Item" readonly />
+
+                    @* COD ITEM — editable, código del artículo en BAS *@
+                    <input class="celda-input" type="text"
+                           @bind="fila.CodItem"
+                           @bind:event="oninput"
+                           placeholder="Cod." />
+
+                    @* BUDGET — dropdown por ítem (obligatorio).
+                       Al cambiar autocompleta Rubro/Subrubro de esta misma fila.
+                       TODO SQL: SELECT budget_codigo, descripcion_budget FROM Budget *@
+                    <select class="celda-input"
+                            value="@fila.Budget"
+                            @onchange="@(e => OnBudgetItemCambiado(fila, e.Value?.ToString() ?? string.Empty))">
+                        <option value="">--</option>
+                        @foreach (var op in OpcionesBudget)
+                        {
+                            <option value="@op.Codigo">@op.Codigo</option>
+                        }
+                    </select>
+
+                    @* RUBRO — autocompletado desde Budget de la fila, solo lectura *@
+                    <input class="celda-input celda-readonly" type="text"
+                           value="@fila.Rubro" readonly placeholder="Rubro" />
+
+                    @* SUBRUBRO — autocompletado desde Budget, solo lectura *@
+                    <input class="celda-input celda-readonly" type="text"
+                           value="@fila.Subrubro" readonly placeholder="Subrubro" />
+
+                    @* CANTIDAD — editable *@
+                    <input class="celda-input" type="number"
+                           @bind="fila.Cantidad"
+                           @bind:event="oninput"
+                           placeholder="0" min="0" />
+
+                    @* U. DE MEDIDA — editable *@
+                    <input class="celda-input" type="text"
+                           @bind="fila.UnidadMedida"
+                           @bind:event="oninput"
+                           placeholder="Unidad" />
+
+                    @* CANTIDAD U.D.M. — editable *@
+                    <input class="celda-input" type="number"
+                           @bind="fila.CantidadUDM"
+                           @bind:event="oninput"
+                           placeholder="0" min="0" />
+
+                    @* ARCH. ADJUNTO — placeholder visual.
+                       TODO: implementar InputFile pdf/jpg/png *@
+                    <div class="celda-adjunto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
+                        </svg>
+                    </div>
+
+                    @* PROVEEDOR SUGERIDO — texto libre, opcional *@
+                    <input class="celda-input" type="text"
+                           @bind="fila.ProveedorSugerido"
+                           @bind:event="oninput"
+                           placeholder="Proveedor" />
+
+                    @* OBSERVACIÓN ÍTEM — editable, más ancho *@
+                    <input class="celda-input celda-obs" type="text"
+                           @bind="fila.ObservacionItem"
+                           @bind:event="oninput"
+                           placeholder="Ingrese observación del ítem" />
+
+                    @* Botón eliminar fila *@
+                    <button class="btn-eliminar" @onclick="() => EliminarFila(fila)"
+                            title="Eliminar ítem" disabled="@(Filas.Count == 1)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
+                    </button>
+
+                </div>
+            }
+
+            @* ── PAGINACIÓN DE FILAS ──────────────────────────── *@
+            <div class="tabla-paginacion">
+                <span class="pag-info">@PaginaInicio–@PaginaFin of @Filas.Count</span>
+                <div class="pag-botones">
+                    <button class="btn-pag" @onclick="PrimeraPagina"   disabled="@(PaginaActual==1)">«</button>
+                    <button class="btn-pag" @onclick="PaginaAnterior"  disabled="@(PaginaActual==1)">‹</button>
+                    <button class="btn-pag" @onclick="PaginaSiguiente" disabled="@(PaginaActual==TotalPaginas)">›</button>
+                    <button class="btn-pag" @onclick="UltimaPagina"    disabled="@(PaginaActual==TotalPaginas)">»</button>
+                </div>
+            </div>
+
+        </div>
+
+        @* ── MENSAJE DE VALIDACIÓN ────────────────────────────── *@
+        @if (!string.IsNullOrEmpty(MensajeValidacion))
+        {
+            <div class="cr-mensaje-error">@MensajeValidacion</div>
+        }
+
+        @* ── BOTONES FOOTER ───────────────────────────────────── *@
+        <div class="cr-footer">
+            <button class="btn-volver" @onclick="Volver">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                VOLVER
+            </button>
+            <button class="btn-hecho" @onclick="MostrarConfirmacion" disabled="@Guardando">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                </svg>
+                @(Guardando ? "ENVIANDO..." : "HECHO")
+            </button>
+        </div>
+
+    </main>
+
+</div>
+
+@* ── MODAL DE CONFIRMACIÓN ────────────────────────────────────── *@
+@if (MostrarModal)
+{
+    <div class="modal-overlay" @onclick="CerrarModal">
+        <div class="modal-caja" @onclick:stopPropagation="true">
+            <div class="modal-icono">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                </svg>
+            </div>
+            <h3 class="modal-titulo">Confirmar carga</h3>
+            <p class="modal-texto">
+                Estás por cargar <strong>@Filas.Count ítem@(Filas.Count != 1 ? "s" : "")</strong>
+                en el requerimiento <strong>N° @NroRequerimiento</strong>.
+                <br />¿Confirmás la operación?
+            </p>
+            <div class="modal-botones">
+                <button class="btn-modal-cancelar" @onclick="CerrarModal" disabled="@Guardando">Cancelar</button>
+                <button class="btn-modal-confirmar" @onclick="ConfirmarCarga" disabled="@Guardando">
+                    @(Guardando ? "Enviando..." : "Confirmar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+
+    // ── Protección de ruta ────────────────────────────────────
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !Sesion.isAuthenticated)
+            Nav.NavigateTo("/login", replace: true);
+
+        if (firstRender)
+        {
+            // TODO SQL: cargar lista real de budgets desde tabla Budget
+            //   SELECT budget_codigo, descripcion_budget FROM Budget ORDER BY budget_codigo
+            CargarOpcionesBudget();
+
+            // TODO SQL: cargar departamento del usuario logueado
+            //   SELECT depto FROM Usuarios WHERE username = @Sesion.userName
+            // Departamento = ...
+
+            // Próximo N° de requerimiento desde TRANSAC (max+1).
+            // BAS termina asignando el N° real al recibir el POST con Numero=0,
+            // pero mostramos el predicho para que el usuario lo vea desde el inicio.
+            try
+            {
+                int prox = await ReqService.GetProximoNumeroAsync();
+                NroRequerimiento = prox.ToString("0000000000");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR CreateReq] obteniendo próximo NROTRANS: {ex.Message}");
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    // ── Modelo de fila de la tabla ────────────────────────────
+    private class FilaItem
+    {
+        public int Item                { get; set; }
+        public string CodItem          { get; set; } = string.Empty;
+        public string Budget           { get; set; } = string.Empty; // obligatorio por ítem
+        public string Rubro            { get; set; } = string.Empty; // viene del Budget (auto)
+        public string Subrubro         { get; set; } = string.Empty; // viene del Budget (auto)
+        public decimal Cantidad        { get; set; }
+        public string UnidadMedida     { get; set; } = string.Empty;
+        public decimal CantidadUDM     { get; set; }
+        public string ProveedorSugerido{ get; set; } = string.Empty;
+        public string ObservacionItem  { get; set; } = string.Empty;
+    }
+
+    // ── Opciones de Budget (dropdown) ─────────────────────────
+    private class BudgetOption
+    {
+        public string Codigo { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public string Rubro { get; set; } = string.Empty;
+        public string Subrubro { get; set; } = string.Empty;
+    }
+
+    private List<BudgetOption> OpcionesBudget { get; set; } = new();
+
+    private void CargarOpcionesBudget()
+    {
+        // TODO SQL: reemplazar este placeholder por la consulta real
+        //   SELECT b.budget_codigo, b.descripcion_budget, r.rubro_nombre, r.subrubro
+        //   FROM Budget b INNER JOIN Rubro r ON r.rubro_id = b.rubro_id
+        //   ORDER BY b.budget_codigo
+        OpcionesBudget = new List<BudgetOption>
+        {
+            // datos dummy hasta que esté la consulta SQL
+        };
+    }
+
+    // ── Variables del formulario header (UI) ──────────────────
+
+    //NroRequerimiento se carga desde TRANSAC (último + 1)
+    private string NroRequerimiento { get; set; } = "000001";
+
+    // Budget ahora vive en cada FilaItem (1 budget por ítem). Ver OnBudgetItemCambiado abajo.
+
+    private string Departamento  { get; set; } = string.Empty; // TODO SQL (depto del usuario)
+    private string Solicitante   { get; set; } = string.Empty; // opcional
+    private string Prefijo       { get; set; } = "0001";
+    private DateTime FechaRequerida { get; set; } = DateTime.Today.AddDays(10); // obligatoria
+    private string Observacion   { get; set; } = string.Empty;
+    private string IdiomaSeleccionado { get; set; } = "es";
+
+    // Tipo de pedido — auto-calculado en función de FechaRequerida (no editable).
+    private string TipoPedido
+    {
+        get
+        {
+            int dias = (FechaRequerida.Date - DateTime.Today).Days;
+            if (dias <= 5)  return "Urgente";
+            if (dias <= 10) return "Media";
+            return "Estándar";
+        }
+    }
+
+    // Cuando cambia el Budget de un ítem, auto-completar Rubro/Subrubro de esa misma fila.
+    private void OnBudgetItemCambiado(FilaItem fila, string nuevoBudget)
+    {
+        fila.Budget = nuevoBudget;
+
+        // TODO SQL: lookup del rubro asociado al budget elegido (por ítem)
+        //   SELECT r.rubro_nombre, r.subrubro FROM Budget b
+        //   INNER JOIN Rubro r ON r.rubro_id = b.rubro_id
+        //   WHERE b.budget_codigo = @fila.Budget
+        var op = OpcionesBudget.FirstOrDefault(o => o.Codigo == nuevoBudget);
+        fila.Rubro    = op?.Rubro    ?? string.Empty;
+        fila.Subrubro = op?.Subrubro ?? string.Empty;
+    }
+
+    // ── Variables para construir el JSON BAS (cabecera) ───────
+    // TODO SQL: cargar todos estos campos desde el SQL/sesión cuando corresponda.
+
+    private string Proveedor          = string.Empty; // TODO SQL: por defecto del depto/usuario? o se ingresa?
+    private string NombreProveedor    = string.Empty; // TODO SQL: SELECT nombre FROM Proveedores WHERE codigo=@Proveedor
+    private string MonedaCtaCte       = string.Empty; // TODO SQL: por config de empresa
+    private string MonedaComprobante  = string.Empty; // TODO SQL: por config de empresa
+    private decimal TotalGravado      = 0m;           // TODO: calcular sumando items (PrecioUnitario*Cantidad)
+    private decimal TotalIvaCab       = 0m;           // TODO: calcular sumando items
+    private decimal TotalCab          = 0m;           // TODO: calcular sumando items
+    private string MetodoPago         = "C";          // C = contado
+    private string Caja               = "0001";       // TODO SQL: caja por defecto del usuario
+    private string Comprador          = "COM";        // TODO SQL: usuario comprador (del logueado)
+    private int    Empresa            = 1;            // TODO SQL: empresa por defecto
+    private int    Sucursal           = 1;            // TODO SQL: sucursal por defecto del usuario
+    private int    ImputacionContable = 501;          // TODO SQL: imputación contable según rubro/budget
+    private int    Deposito           = 1;            // TODO SQL: depósito por defecto
+    private string NumeroCAIoCAE      = string.Empty;
+    private string VencimientoCAIoCAE = string.Empty;
+
+    // Por defecto del item BAS — TODO SQL: traer la unidad de medida real, IVA, etc.
+    private decimal TasaIvaDefault   = 21m;
+    private string PendienteRemitirFacturarDefault = "A"; // A = a recibir (compras)
+    private string TipoEntregaDefault = "O";              // O = orden de compra
+    private string NumeroUnidadMedidaDefault = "1";       // TODO SQL: lookup de UDM en BAS
+
+    // Vencimientos / Efectivos — para RQ pueden ir vacíos o con default.
+    // TODO: validar con BAS si son obligatorios para Comprobante="RQ"
+
+    // ── Tabla y paginación ────────────────────────────────────
+
+    private const int FilasPorPagina = 3;
+    private int PaginaActual = 1;
+
+    private List<FilaItem> Filas { get; set; } = new()
+    {
+        new FilaItem { Item = 1 }
+    };
+
+    private int TotalPaginas => Math.Max(1, (int)Math.Ceiling((double)Filas.Count / FilasPorPagina));
+    private int PaginaInicio => (PaginaActual - 1) * FilasPorPagina + 1;
+    private int PaginaFin    => Math.Min(PaginaActual * FilasPorPagina, Filas.Count);
+
+    private IEnumerable<FilaItem> FilasPaginadas =>
+        Filas.Skip((PaginaActual - 1) * FilasPorPagina).Take(FilasPorPagina);
+
+    private void PrimeraPagina()   => PaginaActual = 1;
+    private void UltimaPagina()    => PaginaActual = TotalPaginas;
+    private void PaginaAnterior()  { if (PaginaActual > 1) PaginaActual--; }
+    private void PaginaSiguiente() { if (PaginaActual < TotalPaginas) PaginaActual++; }
+
+    // Enter en cualquier input dentro de una fila → agrega nueva fila.
+    // Aprovecha event bubbling: el handler está en el div .tabla-fila
+    // y captura el keydown que sube desde cualquier <input> descendiente.
+    private void OnFilaKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            AgregarFila();
+    }
+
+    private void AgregarFila()
+    {
+        // Cada ítem es independiente: empieza sin Budget/Rubro propio.
+        Filas.Add(new FilaItem { Item = Filas.Count + 1 });
+        PaginaActual = TotalPaginas;
+    }
+
+    private void EliminarFila(FilaItem fila)
+    {
+        Filas.Remove(fila);
+        for (int i = 0; i < Filas.Count; i++)
+            Filas[i].Item = i + 1;
+        if (PaginaActual > TotalPaginas)
+            PaginaActual = TotalPaginas;
+    }
+
+    // ── Modal y guardado ──────────────────────────────────────
+
+    private bool   MostrarModal       { get; set; } = false;
+    private bool   Guardando          { get; set; } = false;
+    private string MensajeValidacion  { get; set; } = string.Empty;
+
+    private void MostrarConfirmacion()
+    {
+        MensajeValidacion = string.Empty;
+
+        if (!ValidarFormulario(out string msg))
+        {
+            MensajeValidacion = msg;
+            return;
+        }
+
+        MostrarModal = true;
+    }
+
+    private void CerrarModal() => MostrarModal = false;
+
+    private bool ValidarFormulario(out string mensaje)
+    {
+        if (FechaRequerida.Date < DateTime.Today)
+        {
+            mensaje = "La fecha requerida no puede ser anterior a hoy.";
+            return false;
+        }
+
+        if (Observacion.Length > 500)
+        {
+            mensaje = "La observación supera los 500 caracteres.";
+            return false;
+        }
+
+        var itemsConDatos = Filas
+            .Where(f => f.Cantidad > 0 || !string.IsNullOrWhiteSpace(f.CodItem)
+                                       || !string.IsNullOrWhiteSpace(f.UnidadMedida)
+                                       || !string.IsNullOrWhiteSpace(f.Budget))
+            .ToList();
+
+        if (itemsConDatos.Count == 0
+            || !itemsConDatos.Any(f => f.Cantidad > 0 && !string.IsNullOrWhiteSpace(f.UnidadMedida)))
+        {
+            mensaje = "Debe cargar al menos un ítem con cantidad y unidad de medida.";
+            return false;
+        }
+
+        var sinBudget = itemsConDatos.FirstOrDefault(f => string.IsNullOrWhiteSpace(f.Budget));
+        if (sinBudget != null)
+        {
+            mensaje = $"El ítem N° {sinBudget.Item} requiere un Budget.";
+            return false;
+        }
+
+        mensaje = string.Empty;
+        return true;
+    }
+
+    private ComprobanteCompraRequest ConstruirRequest()
+    {
+        // Construye el JSON que se envía a /api/ComprobantesCompra (Comprobante="RQ").
+        // Reemplazo de los strings hardcodeados que estaban en Program.cs.
+        var req = new ComprobanteCompraRequest
+        {
+            FechaCreacion          = DateTime.UtcNow.ToString("o"),         // ISO 8601
+            Fecha                  = DateTime.Today.ToString("yyyy-MM-dd"),
+            Comprobante            = "RQ",                                  // requerimiento de compra
+            Prefijo                = Prefijo,
+            Numero                 = 0,                                     // 0 = lo asigna BAS
+            Proveedor              = Proveedor,
+            Nombre                 = NombreProveedor,
+            MonedaCtaCte           = MonedaCtaCte,
+            MonedaComprobante      = MonedaComprobante,
+            TotalGravado           = TotalGravado,
+            TotalIva               = TotalIvaCab,
+            Total                  = TotalCab,
+            MetodoPago             = MetodoPago,
+            Caja                   = Caja,
+            Comprador              = Comprador,
+            Empresa                = Empresa,
+            Sucursal               = Sucursal,
+            ImputacionContable     = ImputacionContable,
+            Deposito               = Deposito,
+            Usuario                = Sesion.userName,
+            ObservacionComprobante = Observacion,
+            NumeroCAIoCAE          = NumeroCAIoCAE,
+            VencimientoCAIoCAE     = VencimientoCAIoCAE,
+        };
+
+        // Items
+        // TODO SQL/BAS: cada f.Budget debe persistirse contra el ítem. ItemRequest
+        // de BAS no tiene un campo "Budget" directo — se vincula via ImputacionContable
+        // o a una tabla auxiliar (Requerimiento_Item_Budget). Resolver al integrar.
+        foreach (var f in Filas.Where(x => x.Cantidad > 0 || !string.IsNullOrWhiteSpace(x.CodItem)))
+        {
+            req.Items.Add(new ItemRequest
+            {
+                CodigoItem               = f.CodItem,
+                NumeroUnidadMedida       = NumeroUnidadMedidaDefault, // TODO SQL: convertir f.UnidadMedida -> número en BAS
+                CantidadPrimeraUnidad    = f.Cantidad,
+                PrecioUnitario           = 0m,    // TODO SQL: precio unitario del item (lista de precios)
+                ImporteTotal             = 0m,    // TODO: calcular
+                ImporteGravado           = 0m,    // TODO: calcular
+                ImporteIva               = 0m,    // TODO: calcular
+                TasaIva                  = TasaIvaDefault,
+                PendienteRemitirFacturar = PendienteRemitirFacturarDefault,
+                TipoEntrega              = TipoEntregaDefault,
+            });
+        }
+
+        // Vencimientos — TODO: validar si para RQ se requiere alguno.
+        // Si hace falta, descomentar y completar:
+        // req.Vencimientos.Add(new Vencimiento
+        // {
+        //     FechaVencimiento = DateTime.Today.ToString("yyyy-MM-dd"),
+        //     Importe          = TotalCab
+        // });
+
+        // Efectivos — TODO: idem.
+        // req.Efectivos.Add(new Efectivo
+        // {
+        //     MedioPago = "EFE",
+        //     Importe   = TotalCab,
+        //     Cantidad  = 1
+        // });
+
+        return req;
+    }
+
+    private async Task ConfirmarCarga()
+    {
+        if (Guardando) return;
+
+        Debug.WriteLine($"[INFO] Confirmando carga de {Filas.Count} ítems para req N° {NroRequerimiento}");
+
+        Guardando = true;
+        StateHasChanged();
+
+        ComprobanteResponse? resultado = null;
+        string? errorMsg = null;
+        try
+        {
+            var req = ConstruirRequest();
+            resultado = await BasApi.EnviarComprobanteCompraAsync(req);
+        }
+        catch (Exception ex)
+        {
+            errorMsg = ex.Message;
+            Debug.WriteLine($"[ERROR] Excepción al enviar comprobante: {ex}");
+        }
+
+        Guardando = false;
+        MostrarModal = false;
+
+        if (resultado != null)
+        {
+            string nroFinal = resultado.Comprobantes?.FirstOrDefault()?.NumeroFinal ?? NroRequerimiento;
+            Notif.Mostrar($"Requerimiento N° {nroFinal} cargado correctamente.", TipoNotificacion.Exito);
+            Nav.NavigateTo("/home");
+        }
+        else
+        {
+            string detalle = string.IsNullOrEmpty(errorMsg) ? "" : $" Detalle: {errorMsg}";
+            Notif.Mostrar($"No se pudo cargar el requerimiento.{detalle}", TipoNotificacion.Error);
+            StateHasChanged();
+        }
+    }
+
+    // ── Navegación ────────────────────────────────────────────
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

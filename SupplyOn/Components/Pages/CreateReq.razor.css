@@ -1,0 +1,619 @@
+/* ═══════════════════════════════════════════════════════════════
+   CreateReq.razor.css
+   CSS Isolation — solo aplica a CreateReq.razor
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── PÁGINA COMPLETA ──────────────────────────────────────────── */
+.pagina-completa {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #1a3a6b;
+}
+
+/* ── HEADER ───────────────────────────────────────────────────── */
+.cr-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dde3ed;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 12px 32px;
+}
+
+.header-usuario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3a6b;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.logo-img {
+    height: 46px;
+    width: auto;
+}
+
+.logo-texto {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #1a3a6b;
+    letter-spacing: 3px;
+}
+
+.header-idioma {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    color: #1a3a6b;
+}
+
+.selector-idioma {
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.88rem;
+    color: #1a3a6b;
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+/* ── CUERPO AZUL ──────────────────────────────────────────────── */
+.cr-cuerpo {
+    flex: 1;
+    padding: 16px 32px 28px; /* mismo padding horizontal que el header */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── SUBHEADER: N° req / título / estado ──────────────────────── */
+.cr-subheader {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 5px;
+}
+
+.req-numero {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.req-label {
+    font-size: 0.78rem;
+    color: #a8bdd4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.req-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.req-titulo-box {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3a6b;
+    font-weight: 600;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.req-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.estado-label {
+    font-size: 0.78rem;
+    color: #a8bdd4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.estado-badge {
+    background-color: #22c55e;
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 16px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+/* ── CAMPOS DEL FORMULARIO ────────────────────────────────────── */
+.cr-campos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px 28px;
+}
+
+.campos-col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.campos-col-derecha {
+    gap: 18px;
+}
+
+.campo-grupo {
+    display: flex;
+    flex-direction: column; /* etiqueta arriba, input abajo */
+    gap: 6px;
+}
+
+.campo-grupo-obs {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.campo-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #c8d8ea;
+    white-space: nowrap;
+}
+
+.campo-input {
+    flex: 1;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.92rem;
+    color: #1a3a6b;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+    .campo-input:focus {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+    }
+
+/* Campos de solo lectura (Budget, Departamento) */
+.campo-readonly {
+    background-color: #d4dff0;
+    color: #5a7a9a;
+    cursor: not-allowed;
+}
+
+/* Date picker — quitar outline raro en algunos browsers */
+.campo-fecha {
+    cursor: pointer;
+}
+
+.campo-select {
+    cursor: pointer;
+    appearance: auto;
+}
+
+/* Textarea observación */
+.campo-textarea {
+    width: 100%;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.92rem;
+    color: #1a3a6b;
+    outline: none;
+    resize: vertical;
+    font-family: 'Segoe UI', sans-serif;
+    transition: box-shadow 0.2s;
+    min-height: 110px;
+    box-sizing: border-box;
+}
+
+    .campo-textarea:focus {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+    }
+
+/* Campo adjunto (placeholder visual) */
+.campo-adjunto {
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    color: #8fa3bf;
+    cursor: pointer;
+    min-height: 46px;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s;
+}
+
+    .campo-adjunto:hover {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+    }
+
+/* ── TABLA DE ÍTEMS ───────────────────────────────────────────── */
+.cr-tabla-contenedor {
+    background-color: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Barra superior de la tabla con headers
+   12 columnas: ITEM | COD | BUDGET | RUBRO | SUBRUBRO | CANTIDAD | UDM | CANT.UDM | ADJ. | PROV. | OBS. | borrar */
+.tabla-topbar {
+    display: grid;
+    grid-template-columns: 44px 80px 75px 90px 90px 70px 100px 110px 100px 180px 1fr 44px;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 2px solid #eef1f6;
+    gap: 6px;
+}
+
+.tabla-col-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #8fa3bf;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+
+/* Botón + agregar fila */
+.btn-agregar {
+    background-color: #1a3a6b;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+
+    .btn-agregar:hover {
+        background-color: #15305a;
+        transform: scale(1.08);
+    }
+
+    .btn-agregar:active {
+        transform: scale(0.95);
+    }
+
+/* Filas de la tabla — mismo grid que .tabla-topbar */
+.tabla-fila {
+    display: grid;
+    grid-template-columns: 44px 80px 75px 90px 90px 70px 100px 110px 100px 170px 1fr 44px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eef1f6;
+    gap: 6px;
+    transition: background-color 0.1s;
+}
+
+    .tabla-fila:last-of-type {
+        border-bottom: none;
+    }
+
+    .tabla-fila:hover {
+        background-color: #f7f9fc;
+    }
+
+/* Handle de arrastre visual */
+.drag-handle {
+    color: #c5d0de;
+    font-size: 0.85rem;
+    letter-spacing: -2px;
+    cursor: grab;
+    text-align: center;
+    user-select: none;
+}
+
+/* Inputs dentro de las celdas */
+.celda-input {
+    width: 100%;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    color: #2d4060;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+
+    .celda-input:focus {
+        border-color: #1a6fbf;
+        box-shadow: 0 0 0 3px rgba(26, 111, 191, 0.12);
+    }
+
+/* Celdas de solo lectura (RUBRO, SUBRUBRO) */
+.celda-readonly {
+    background-color: #f1f5fb;
+    color: #8fa3bf;
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+/* Input de observación más ancho */
+.celda-obs {
+    width: 100%;
+}
+
+/* Celda adjunto en tabla */
+.celda-adjunto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8fa3bf;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s;
+}
+
+    .celda-adjunto:hover {
+        color: #1a3a6b;
+    }
+
+/* Botón eliminar fila */
+.btn-eliminar {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+    .btn-eliminar:hover:not(:disabled) {
+        background-color: #fee2e2;
+    }
+
+    .btn-eliminar:disabled {
+        color: #d1d5db;
+        cursor: not-allowed;
+    }
+
+/* ── PAGINACIÓN DE LA TABLA ───────────────────────────────────── */
+.tabla-paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid #eef1f6;
+}
+
+.pag-info {
+    font-size: 0.82rem;
+    color: #8fa3bf;
+}
+
+.pag-botones {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-pag {
+    background: none;
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+    color: #1a3a6b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s;
+}
+
+    .btn-pag:hover:not(:disabled) {
+        background-color: #eef1f6;
+    }
+
+    .btn-pag:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+/* ── MENSAJE DE VALIDACIÓN ────────────────────────────────────── */
+.cr-mensaje-error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border: 1.5px solid #ef4444;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    text-align: center;
+}
+
+/* ── BOTONES FOOTER ───────────────────────────────────────────── */
+.cr-footer {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 4px;
+}
+
+.btn-volver {
+    background-color: transparent;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    border-radius: 50px;
+    padding: 12px 36px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+    .btn-volver:hover {
+        background-color: rgba(255,255,255,0.12);
+    }
+
+.btn-hecho {
+    background-color: #1a3a6b;
+    border: 2px solid #2a5298;
+    color: #ffffff;
+    border-radius: 50px;
+    padding: 12px 48px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+    .btn-hecho:hover {
+        background-color: #15305a;
+    }
+
+    .btn-hecho:active {
+        transform: scale(0.97);
+    }
+
+/* ── MODAL DE CONFIRMACIÓN ────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-caja {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    max-width: 420px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: modalEntrar 0.18s ease-out;
+}
+
+@keyframes modalEntrar {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-icono {
+    color: #f59e0b;
+}
+
+.modal-titulo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a3a6b;
+    margin: 0;
+}
+
+.modal-texto {
+    font-size: 0.9rem;
+    color: #4a6080;
+    text-align: center;
+    line-height: 1.6;
+    margin: 0;
+}
+
+    .modal-texto strong {
+        color: #1a3a6b;
+    }
+
+.modal-botones {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    width: 100%;
+}
+
+.btn-modal-cancelar {
+    flex: 1;
+    background-color: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a6080;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .btn-modal-cancelar:hover {
+        background-color: #e2e8f0;
+    }
+
+.btn-modal-confirmar {
+    flex: 1;
+    background-color: #1a3a6b;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .btn-modal-confirmar:hover {
+        background-color: #15305a;
+    }

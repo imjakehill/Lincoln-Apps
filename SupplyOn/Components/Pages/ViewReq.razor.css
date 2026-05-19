@@ -1,0 +1,638 @@
+/* ═══════════════════════════════════════════════════════════════
+   ViewReq.razor.css — mismo lenguaje visual que CreateReq/Home
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── PÁGINA ───────────────────────────────────────────────────── */
+.pagina-completa {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #1a3a6b;
+}
+
+/* ── HEADER ───────────────────────────────────────────────────── */
+.vr-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dde3ed;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 12px 32px;
+}
+
+.header-usuario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3a6b;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-img {
+    height: 46px;
+    width: auto;
+}
+
+.header-idioma {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    color: #1a3a6b;
+}
+
+.selector-idioma {
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.88rem;
+    color: #1a3a6b;
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+/* ── CUERPO ──────────────────────────────────────────────────── */
+.vr-cuerpo {
+    flex: 1;
+    padding: 16px 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── SUBHEADER ───────────────────────────────────────────────── */
+.vr-subheader {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-volver-header {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    transition: background-color 0.15s;
+}
+
+    .btn-volver-header:hover {
+        background: rgba(255,255,255,0.25);
+    }
+
+.vr-titulo-box {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3a6b;
+    font-weight: 600;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    justify-self: center;
+}
+
+.vr-total-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.vr-total-label {
+    font-size: 0.72rem;
+    color: #a8bdd4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vr-total-valor {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* ── FILTROS ─────────────────────────────────────────────────── */
+.vr-filtros-barra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-filtros {
+    background-color: #ffffff;
+    border: 1.5px solid #dde3ed;
+    color: #1a3a6b;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+    .btn-filtros:hover {
+        background-color: #f1f5fb;
+        border-color: #1a6fbf;
+    }
+
+.filtros-badge {
+    background-color: #1a3a6b;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.filtros-chevron {
+    font-size: 0.85rem;
+    color: #8fa3bf;
+}
+
+.btn-filtros-limpiar {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 8px;
+}
+
+    .btn-filtros-limpiar:hover:not(:disabled) {
+        color: #ffd966;
+    }
+
+    .btn-filtros-limpiar:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.vr-filtros-panel {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    animation: filtrosEntrar 0.16s ease-out;
+}
+
+@keyframes filtrosEntrar {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.vr-filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px 18px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filtro-grupo-full {
+    grid-column: 1 / -1;
+}
+
+.filtro-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #5a7a9a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.filtro-input {
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    color: #2d4060;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .filtro-input:focus {
+        border-color: #1a6fbf;
+        box-shadow: 0 0 0 3px rgba(26,111,191,0.12);
+    }
+
+.vr-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #eef1f6;
+}
+
+@media (max-width: 1100px) {
+    .vr-filtros-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── BANNER ──────────────────────────────────────────────────── */
+.banner-notif {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.banner-exito { background-color: rgba(34,197,94,0.85); }
+.banner-error { background-color: rgba(239,68,68,0.85); }
+
+.banner-texto { flex: 1; }
+
+.banner-cerrar {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+/* ── TABLA ───────────────────────────────────────────────────── */
+.vr-tabla-contenedor {
+    background-color: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.vr-loading {
+    padding: 36px 16px;
+    text-align: center;
+    color: #6b7c93;
+    font-size: 0.95rem;
+}
+
+.vr-tabla-scroll {
+    overflow-x: auto;
+}
+
+.vr-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+    .vr-tabla thead th {
+        background-color: #f1f5fb;
+        color: #5a7a9a;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-size: 0.7rem;
+        padding: 12px 10px;
+        text-align: left;
+        white-space: nowrap;
+        border-bottom: 2px solid #eef1f6;
+    }
+
+    .vr-tabla tbody td {
+        padding: 10px;
+        color: #2d4060;
+        border-bottom: 1px solid #eef1f6;
+        white-space: nowrap;
+    }
+
+    .vr-tabla tbody tr:hover {
+        background-color: #f7f9fc;
+    }
+
+    .vr-tabla tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.vr-mono {
+    font-family: 'Consolas', monospace;
+    font-weight: 600;
+    color: #1a3a6b;
+}
+
+.vr-obs {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── BADGE ESTADO (reuso) ────────────────────────────────────── */
+.badge-estado {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+.estado-pendiente { background-color: #fff5d6; color: #b07b00; }
+.estado-aprobado  { background-color: #d4f5dd; color: #1a7a36; }
+.estado-rechazado { background-color: #fde2e2; color: #b53030; }
+.estado-default   { background-color: #e2e8f0; color: #4a6080; }
+
+/* ── ACCIONES ────────────────────────────────────────────────── */
+.vr-acciones {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-accion {
+    background: none;
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+    .btn-accion:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+.btn-editar { color: #1a6fbf; }
+
+    .btn-editar:hover:not(:disabled) {
+        background-color: #e0ecfa;
+        border-color: #1a6fbf;
+    }
+
+.btn-eliminar-fila { color: #ef4444; }
+
+    .btn-eliminar-fila:hover:not(:disabled) {
+        background-color: #fee2e2;
+        border-color: #ef4444;
+    }
+
+/* ── PAGINACIÓN ──────────────────────────────────────────────── */
+.vr-paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid #eef1f6;
+}
+
+.pag-info {
+    font-size: 0.82rem;
+    color: #8fa3bf;
+}
+
+.pag-botones {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.pag-actual {
+    font-size: 0.82rem;
+    color: #1a3a6b;
+    font-weight: 600;
+    padding: 0 10px;
+}
+
+.btn-pag {
+    background: none;
+    border: 1.5px solid #dde3ed;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+    color: #1a3a6b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s;
+}
+
+    .btn-pag:hover:not(:disabled) {
+        background-color: #eef1f6;
+    }
+
+    .btn-pag:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+/* ── MODAL (reuso del estilo de CreateReq) ───────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-caja {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    max-width: 420px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: modalEntrar 0.18s ease-out;
+}
+
+.modal-caja-edit {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 28px 32px;
+    max-width: 720px;
+    width: 95%;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: modalEntrar 0.18s ease-out;
+}
+
+@keyframes modalEntrar {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-icono { color: #f59e0b; }
+
+.modal-titulo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a3a6b;
+    margin: 0 0 18px 0;
+    text-align: center;
+}
+
+.modal-texto {
+    font-size: 0.9rem;
+    color: #4a6080;
+    text-align: center;
+    line-height: 1.6;
+    margin: 0;
+}
+
+    .modal-texto strong {
+        color: #1a3a6b;
+    }
+
+/* Form dentro del modal de edición */
+.modal-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+}
+
+.modal-fila {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal-fila-full {
+    grid-column: 1 / -1;
+}
+
+.modal-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #5a7a9a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.modal-input {
+    border: 1.5px solid #dde3ed;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    color: #2d4060;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .modal-input:focus {
+        border-color: #1a6fbf;
+        box-shadow: 0 0 0 3px rgba(26,111,191,0.12);
+    }
+
+.modal-readonly {
+    background-color: #f1f5fb;
+    color: #8fa3bf;
+    cursor: not-allowed;
+}
+
+.modal-textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+/* Botones del modal */
+.modal-botones {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.btn-modal-cancelar {
+    background-color: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a6080;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .btn-modal-cancelar:hover:not(:disabled) {
+        background-color: #e2e8f0;
+    }
+
+.btn-modal-confirmar {
+    background-color: #1a3a6b;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 22px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .btn-modal-confirmar:hover:not(:disabled) {
+        background-color: #15305a;
+    }
+
+.btn-modal-peligro {
+    background-color: #ef4444;
+}
+
+    .btn-modal-peligro:hover:not(:disabled) {
+        background-color: #c53030;
+    }
+
+.btn-modal-cancelar:disabled,
+.btn-modal-confirmar:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Modal de eliminación (centrado, igual a CreateReq) */
+.modal-caja .modal-botones {
+    justify-content: stretch;
+}
+
+    .modal-caja .modal-botones .btn-modal-cancelar,
+    .modal-caja .modal-botones .btn-modal-confirmar {
+        flex: 1;
+    }

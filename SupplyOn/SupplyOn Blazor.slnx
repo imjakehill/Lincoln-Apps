@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="CMD" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="SupplyOn Blazor.csproj" />
+</Solution>
