@@ -265,10 +265,10 @@
 }
 
 /* Barra superior de la tabla con headers
-   12 columnas: ITEM | COD | BUDGET | RUBRO | SUBRUBRO | CANTIDAD | UDM | CANT.UDM | ADJ. | PROV. | OBS. | borrar */
+   12 columnas: ITEM | COD(+lupa) | BUDGET | RUBRO | SUBRUBRO | CANTIDAD | UDM | CANT.UDM | ADJ. | PROV. | OBS. | borrar */
 .tabla-topbar {
     display: grid;
-    grid-template-columns: 44px 80px 75px 90px 90px 70px 100px 110px 100px 180px 1fr 44px;
+    grid-template-columns: 44px 120px 75px 90px 90px 70px 100px 110px 100px 180px 1fr 44px;
     align-items: center;
     padding: 10px 12px;
     border-bottom: 2px solid #eef1f6;
@@ -312,7 +312,7 @@
 /* Filas de la tabla — mismo grid que .tabla-topbar */
 .tabla-fila {
     display: grid;
-    grid-template-columns: 44px 80px 75px 90px 90px 70px 100px 110px 100px 170px 1fr 44px;
+    grid-template-columns: 44px 120px 75px 90px 90px 70px 100px 110px 100px 170px 1fr 44px;
     align-items: center;
     padding: 8px 12px;
     border-bottom: 1px solid #eef1f6;
@@ -616,4 +616,199 @@
 
     .btn-modal-confirmar:hover {
         background-color: #15305a;
+    }
+
+/* ── CELDA COD ITEM con botón lupa ───────────────────────────── */
+.celda-coditem {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+}
+
+    .celda-coditem .celda-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+.btn-lupa-cell {
+    background-color: #1a3a6b;
+    border: none;
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color 0.15s, transform 0.1s;
+}
+
+    .btn-lupa-cell:hover {
+        background-color: #15305a;
+        transform: scale(1.05);
+    }
+
+    .btn-lupa-cell:active {
+        transform: scale(0.95);
+    }
+
+/* ── MODAL CATÁLOGO DE ITEMS ─────────────────────────────────── */
+.modal-items-caja {
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 720px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    animation: modalEntrar 0.18s ease-out;
+    overflow: hidden;
+}
+
+.modal-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid #eef1f6;
+}
+
+    .modal-items-header .modal-titulo {
+        margin: 0;
+    }
+
+.modal-cerrar-x {
+    background: none;
+    border: none;
+    color: #8fa3bf;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+    .modal-cerrar-x:hover {
+        background-color: #f1f5fb;
+        color: #1a3a6b;
+    }
+
+.modal-items-buscador {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 24px;
+    padding: 8px 12px;
+    border: 1.5px solid #dde3ed;
+    border-radius: 8px;
+    color: #8fa3bf;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+    .modal-items-buscador:focus-within {
+        border-color: #1a6fbf;
+        box-shadow: 0 0 0 3px rgba(26,111,191,0.12);
+    }
+
+.modal-items-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    color: #2d4060;
+    font-family: 'Segoe UI', sans-serif;
+    background: transparent;
+}
+
+.modal-items-lista {
+    flex: 1;
+    overflow-y: auto;
+    margin: 0 24px;
+    border: 1px solid #eef1f6;
+    border-radius: 8px;
+}
+
+.modal-items-vacio {
+    padding: 40px 20px;
+    text-align: center;
+    color: #8fa3bf;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+    .modal-items-vacio strong {
+        color: #2d4060;
+    }
+
+.modal-items-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+    .modal-items-tabla thead th {
+        background-color: #f1f5fb;
+        color: #5a7a9a;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-size: 0.68rem;
+        padding: 10px 12px;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        border-bottom: 1px solid #eef1f6;
+    }
+
+    .modal-items-tabla tbody td {
+        padding: 8px 12px;
+        color: #2d4060;
+        border-bottom: 1px solid #eef1f6;
+    }
+
+    .modal-items-tabla tbody tr:hover {
+        background-color: #f7f9fc;
+        cursor: pointer;
+    }
+
+    .modal-items-tabla tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+.vr-mono {
+    font-family: 'Consolas', monospace;
+    font-weight: 600;
+    color: #1a3a6b;
+}
+
+.btn-seleccionar-item {
+    flex: none;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+}
+
+.modal-items-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px 20px;
+    border-top: 1px solid #eef1f6;
+    margin-top: 14px;
+}
+
+.modal-items-contador {
+    font-size: 0.8rem;
+    color: #8fa3bf;
+}
+
+    .modal-items-footer .btn-modal-cancelar {
+        flex: none;
+        padding: 9px 22px;
     }

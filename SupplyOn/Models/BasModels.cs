@@ -8,46 +8,60 @@ namespace SupplyOn_Blazor.Models;
 
 public class ComprobanteCompraRequest
 {
+    // ── Obligatorios siempre ──────────────────────────────
     public string FechaCreacion { get; set; } = string.Empty;
-    public string Fecha { get; set; } = string.Empty;
-    public string Comprobante { get; set; } = string.Empty; // RQ o OC
-    public string Prefijo { get; set; } = string.Empty;
-    public int Numero { get; set; }                  // 0 = autoincremental
-    public string Proveedor { get; set; } = string.Empty;
-    public string Nombre { get; set; } = string.Empty;
-    public string MonedaCtaCte { get; set; } = string.Empty;
-    public string MonedaComprobante { get; set; } = string.Empty;
-    public decimal TotalGravado { get; set; }
-    public decimal TotalIva { get; set; }
-    public decimal Total { get; set; }
-    public string MetodoPago { get; set; } = string.Empty;   // C = contado
-    public string Caja { get; set; } = string.Empty;
-    public string Comprador { get; set; } = string.Empty;
-    public int Empresa { get; set; }
-    public int ImputacionContable { get; set; }              // max 9 dígitos
-    public string ObservacionComprobante { get; set; } = string.Empty;
-    public int Sucursal { get; set; }
-    public int Deposito { get; set; }
-    public string Usuario { get; set; } = string.Empty;
-    public string NumeroCAIoCAE { get; set; } = string.Empty;
-    public string VencimientoCAIoCAE { get; set; } = string.Empty;
-    public List<ItemRequest> Items { get; set; } = new();
-    public List<Vencimiento> Vencimientos { get; set; } = new();
-    public List<Efectivo> Efectivos { get; set; } = new();
+    public string Fecha          { get; set; } = string.Empty;
+    public string Comprobante    { get; set; } = string.Empty; // RQ o OC
+    public string Prefijo        { get; set; } = string.Empty;
+    public int    Numero         { get; set; }                 // 0 = autoincremental BAS
+    public string Usuario        { get; set; } = string.Empty;
+
+    // ── Ints estructurales (RQ requiere al menos Sucursal/Deposito/ImputacionContable) ──
+    public int Empresa            { get; set; }
+    public int Sucursal           { get; set; }
+    public int ImputacionContable { get; set; }                // max 9 dígitos
+    public int Deposito           { get; set; }
+
+    // ── Opcionales: si quedan en null NO se serializan ────
+    // (BasApiClient usa JsonIgnoreCondition.WhenWritingNull)
+    public string?  Proveedor              { get; set; }       // OPCIONAL en RQ
+    public string?  Nombre                 { get; set; }       // OPCIONAL
+    public string?  ObservacionComprobante { get; set; }       // OPCIONAL — se manda si tiene texto
+    public string?  Comprador              { get; set; }
+
+    // ── NO aplican a RQ — quedan nullable y se mandan null ──
+    public string?  MonedaCtaCte       { get; set; }
+    public string?  MonedaComprobante  { get; set; }
+    public decimal? TotalGravado       { get; set; }
+    public decimal? TotalIva           { get; set; }
+    public decimal? Total              { get; set; }
+    public string?  MetodoPago         { get; set; }           // C = contado (pago)
+    public string?  Caja               { get; set; }           // (pago)
+    public string?  NumeroCAIoCAE      { get; set; }           // (fiscal)
+    public string?  VencimientoCAIoCAE { get; set; }           // (fiscal)
+
+    public List<ItemRequest>  Items        { get; set; } = new();
+    public List<Vencimiento>? Vencimientos { get; set; }       // null = no se serializa
+    public List<Efectivo>?    Efectivos    { get; set; }       // null = no se serializa
 }
 
 public class ItemRequest
 {
-    public string CodigoItem { get; set; } = string.Empty;
-    public string NumeroUnidadMedida { get; set; } = string.Empty;
-    public decimal CantidadPrimeraUnidad { get; set; }
-    public decimal PrecioUnitario { get; set; }
-    public decimal ImporteTotal { get; set; }
-    public decimal ImporteGravado { get; set; }
-    public decimal ImporteIva { get; set; }
-    public decimal TasaIva { get; set; }
+    // ── Obligatorios para RQ ─────────────────────────────
     public string PendienteRemitirFacturar { get; set; } = string.Empty; // A = a recibir
-    public string TipoEntrega { get; set; } = string.Empty;              // O = orden de compra
+    public string TipoEntrega              { get; set; } = string.Empty; // O = orden de compra
+
+    // ── Opcionales (omitir si null) ──────────────────────
+    public string? CodigoItem         { get; set; }
+    public string? NumeroUnidadMedida { get; set; }
+
+    // ── NO aplican a RQ (sin precios ni cantidad por base SQL incompleta) ──
+    public decimal? CantidadPrimeraUnidad { get; set; }
+    public decimal? PrecioUnitario        { get; set; }
+    public decimal? ImporteTotal          { get; set; }
+    public decimal? ImporteGravado        { get; set; }
+    public decimal? ImporteIva            { get; set; }
+    public decimal? TasaIva               { get; set; }
 }
 
 public class Vencimiento

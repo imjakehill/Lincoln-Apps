@@ -194,11 +194,21 @@
                     <input class="celda-input celda-readonly" type="text"
                            value="@fila.Item" readonly />
 
-                    @* COD ITEM — editable, código del artículo en BAS *@
-                    <input class="celda-input" type="text"
-                           @bind="fila.CodItem"
-                           @bind:event="oninput"
-                           placeholder="Cod." />
+                    @* COD ITEM — editable + botón lupa que abre catálogo de items *@
+                    <div class="celda-coditem">
+                        <input class="celda-input" type="text"
+                               @bind="fila.CodItem"
+                               @bind:event="oninput"
+                               placeholder="Cod." />
+                        <button type="button"
+                                class="btn-lupa-cell"
+                                @onclick="() => AbrirModalItems(fila)"
+                                title="Buscar item del catálogo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
+                    </div>
 
                     @* BUDGET — dropdown por ítem (obligatorio).
                        Al cambiar autocompleta Rubro/Subrubro de esta misma fila.
@@ -336,6 +346,83 @@
     </div>
 }
 
+@* ── MODAL DE CATÁLOGO DE ITEMS ──────────────────────────────── *@
+@if (MostrarModalItems)
+{
+    <div class="modal-overlay" @onclick="CerrarModalItems">
+        <div class="modal-items-caja" @onclick:stopPropagation="true">
+            <div class="modal-items-header">
+                <h3 class="modal-titulo">Catálogo de ítems</h3>
+                <button class="modal-cerrar-x" @onclick="CerrarModalItems" title="Cerrar">✕</button>
+            </div>
+
+            @* Buscador *@
+            <div class="modal-items-buscador">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <input type="text" class="modal-items-input"
+                       @bind="BusquedaItem"
+                       @bind:event="oninput"
+                       placeholder="Buscar por código o nombre..." />
+            </div>
+
+            @* Lista de items *@
+            <div class="modal-items-lista">
+                @if (CatalogoItems.Count == 0)
+                {
+                    <div class="modal-items-vacio">
+                        Catálogo vacío.
+                    </div>
+                }
+                else if (!CatalogoItemsFiltrados.Any())
+                {
+                    <div class="modal-items-vacio">
+                        Sin coincidencias para "<strong>@BusquedaItem</strong>".
+                    </div>
+                }
+                else
+                {
+                    <table class="modal-items-tabla">
+                        <thead>
+                            <tr>
+                                <th>CÓDIGO</th>
+                                <th>NOMBRE</th>
+                                <th>UDM</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var it in CatalogoItemsFiltrados)
+                            {
+                                <tr class="modal-items-fila"
+                                    @ondblclick="() => SeleccionarItemCatalogo(it)">
+                                    <td class="vr-mono">@it.Codigo</td>
+                                    <td>@it.Nombre</td>
+                                    <td>@it.UnidadMedida</td>
+                                    <td>
+                                        <button class="btn-modal-confirmar btn-seleccionar-item"
+                                                @onclick="() => SeleccionarItemCatalogo(it)">
+                                            Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="modal-items-footer">
+                <span class="modal-items-contador">
+                    @CatalogoItemsFiltrados.Count() de @CatalogoItems.Count
+                </span>
+                <button class="btn-modal-cancelar" @onclick="CerrarModalItems">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
 
@@ -351,9 +438,13 @@
             //   SELECT budget_codigo, descripcion_budget FROM Budget ORDER BY budget_codigo
             CargarOpcionesBudget();
 
-            // TODO SQL: cargar departamento del usuario logueado
-            //   SELECT depto FROM Usuarios WHERE username = @Sesion.userName
-            // Departamento = ...
+            // TODO SQL: cargar catálogo de items
+            //   SELECT CODIGO, DESCRIPCION, UDM FROM ITEMS WHERE ACTIVO=1 ORDER BY CODIGO
+            CargarCatalogoItems();
+
+            // Departamento = usuario logueado (mientras no haya base con la relación real).
+            // TODO SQL futuro: SELECT depto FROM Usuarios WHERE username = @Sesion.userName
+            Departamento = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName;
 
             // Próximo N° de requerimiento desde TRANSAC (max+1).
             // BAS termina asignando el N° real al recibir el POST con Numero=0,
@@ -410,6 +501,68 @@
         };
     }
 
+    // ── Catálogo de items (modal lupa) ────────────────────────
+    private class CatalogoItem
+    {
+        public string Codigo        { get; set; } = string.Empty;
+        public string Nombre        { get; set; } = string.Empty;
+        public string UnidadMedida  { get; set; } = string.Empty;
+    }
+
+    private List<CatalogoItem> CatalogoItems { get; set; } = new();
+
+    private void CargarCatalogoItems()
+    {
+        // TODO SQL: reemplazar este placeholder por la consulta real
+        //   SELECT CODIGO, DESCRIPCION, UDM FROM ITEMS WHERE ACTIVO=1 ORDER BY CODIGO
+        CatalogoItems = new List<CatalogoItem>
+        {
+            // datos dummy hasta que esté la consulta SQL
+        };
+    }
+
+    private bool   MostrarModalItems   { get; set; } = false;
+    private string BusquedaItem        { get; set; } = string.Empty;
+    private FilaItem? FilaParaCatalogo { get; set; }
+
+    private IEnumerable<CatalogoItem> CatalogoItemsFiltrados
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(BusquedaItem))
+                return CatalogoItems;
+
+            string q = BusquedaItem.Trim().ToLowerInvariant();
+            return CatalogoItems.Where(i =>
+                i.Codigo.ToLowerInvariant().Contains(q) ||
+                i.Nombre.ToLowerInvariant().Contains(q));
+        }
+    }
+
+    private void AbrirModalItems(FilaItem fila)
+    {
+        FilaParaCatalogo  = fila;
+        BusquedaItem      = string.Empty;
+        MostrarModalItems = true;
+    }
+
+    private void CerrarModalItems()
+    {
+        MostrarModalItems = false;
+        FilaParaCatalogo  = null;
+        BusquedaItem      = string.Empty;
+    }
+
+    private void SeleccionarItemCatalogo(CatalogoItem item)
+    {
+        if (FilaParaCatalogo is null) return;
+
+        FilaParaCatalogo.CodItem      = item.Codigo;
+        FilaParaCatalogo.UnidadMedida = item.UnidadMedida;
+
+        CerrarModalItems();
+    }
+
     // ── Variables del formulario header (UI) ──────────────────
 
     //NroRequerimiento se carga desde TRANSAC (último + 1)
@@ -450,34 +603,24 @@
         fila.Subrubro = op?.Subrubro ?? string.Empty;
     }
 
-    // ── Variables para construir el JSON BAS (cabecera) ───────
-    // TODO SQL: cargar todos estos campos desde el SQL/sesión cuando corresponda.
+    // ── Variables para construir el JSON BAS ──────────────────
+    // Solo dejo lo que efectivamente se envía a BAS para un RQ.
 
-    private string Proveedor          = string.Empty; // TODO SQL: por defecto del depto/usuario? o se ingresa?
-    private string NombreProveedor    = string.Empty; // TODO SQL: SELECT nombre FROM Proveedores WHERE codigo=@Proveedor
-    private string MonedaCtaCte       = string.Empty; // TODO SQL: por config de empresa
-    private string MonedaComprobante  = string.Empty; // TODO SQL: por config de empresa
-    private decimal TotalGravado      = 0m;           // TODO: calcular sumando items (PrecioUnitario*Cantidad)
-    private decimal TotalIvaCab       = 0m;           // TODO: calcular sumando items
-    private decimal TotalCab          = 0m;           // TODO: calcular sumando items
-    private string MetodoPago         = "C";          // C = contado
-    private string Caja               = "0001";       // TODO SQL: caja por defecto del usuario
-    private string Comprador          = "COM";        // TODO SQL: usuario comprador (del logueado)
-    private int    Empresa            = 1;            // TODO SQL: empresa por defecto
-    private int    Sucursal           = 1;            // TODO SQL: sucursal por defecto del usuario
-    private int    ImputacionContable = 501;          // TODO SQL: imputación contable según rubro/budget
-    private int    Deposito           = 1;            // TODO SQL: depósito por defecto
-    private string NumeroCAIoCAE      = string.Empty;
-    private string VencimientoCAIoCAE = string.Empty;
+    // OPCIONALES (UI los captura — si vienen vacíos se omiten del JSON)
+    private string Proveedor       = string.Empty; // OPCIONAL en RQ
+    private string NombreProveedor = string.Empty; // TODO SQL: SELECT nombre FROM Proveedores WHERE codigo=@Proveedor
 
-    // Por defecto del item BAS — TODO SQL: traer la unidad de medida real, IVA, etc.
-    private decimal TasaIvaDefault   = 21m;
-    private string PendienteRemitirFacturarDefault = "A"; // A = a recibir (compras)
-    private string TipoEntregaDefault = "O";              // O = orden de compra
-    private string NumeroUnidadMedidaDefault = "1";       // TODO SQL: lookup de UDM en BAS
+    // OBLIGATORIOS estructurales (hardcodeados hasta tener base SQL)
+    private int Sucursal           = 1;            // TODO SQL: sucursal por defecto
+    private int ImputacionContable = 501;          // TODO SQL: autocompletable / editable
+    private int Deposito           = 1;            // TODO SQL: depósito por defecto
 
-    // Vencimientos / Efectivos — para RQ pueden ir vacíos o con default.
-    // TODO: validar con BAS si son obligatorios para Comprobante="RQ"
+    // Defaults de Items
+    private string PendienteRemitirFacturarDefault = "A"; // A = a recibir
+    private string TipoEntregaDefault              = "O"; // O = orden de compra
+
+    // NO se envían a BAS en RQ (Vencimientos / Efectivos / Monedas / Totales /
+    // MetodoPago / Caja / CAI / Empresa / Comprador): quedan null en el modelo.
 
     // ── Tabla y paginación ────────────────────────────────────
 
@@ -561,23 +704,20 @@
             return false;
         }
 
-        var itemsConDatos = Filas
-            .Where(f => f.Cantidad > 0 || !string.IsNullOrWhiteSpace(f.CodItem)
-                                       || !string.IsNullOrWhiteSpace(f.UnidadMedida)
-                                       || !string.IsNullOrWhiteSpace(f.Budget))
-            .ToList();
+        // Validación afloja: alcanza con que al menos un ítem tenga ALGÚN dato cargado.
+        // Cantidad / UDM / Budget no son exigidos por la app hasta que esté la base SQL.
+        bool hayAlgunItem = Filas.Any(f =>
+            !string.IsNullOrWhiteSpace(f.CodItem) ||
+            !string.IsNullOrWhiteSpace(f.UnidadMedida) ||
+            !string.IsNullOrWhiteSpace(f.Budget) ||
+            !string.IsNullOrWhiteSpace(f.ProveedorSugerido) ||
+            !string.IsNullOrWhiteSpace(f.ObservacionItem) ||
+            f.Cantidad > 0 ||
+            f.CantidadUDM > 0);
 
-        if (itemsConDatos.Count == 0
-            || !itemsConDatos.Any(f => f.Cantidad > 0 && !string.IsNullOrWhiteSpace(f.UnidadMedida)))
+        if (!hayAlgunItem)
         {
-            mensaje = "Debe cargar al menos un ítem con cantidad y unidad de medida.";
-            return false;
-        }
-
-        var sinBudget = itemsConDatos.FirstOrDefault(f => string.IsNullOrWhiteSpace(f.Budget));
-        if (sinBudget != null)
-        {
-            mensaje = $"El ítem N° {sinBudget.Item} requiere un Budget.";
+            mensaje = "Debe cargar al menos un ítem con algún dato.";
             return false;
         }
 
@@ -587,53 +727,49 @@
 
     private ComprobanteCompraRequest ConstruirRequest()
     {
-        // Construye el JSON que se envía a /api/ComprobantesCompra (Comprobante="RQ").
-        // Reemplazo de los strings hardcodeados que estaban en Program.cs.
+        // JSON enviado a /api/ComprobantesCompra para un RQ.
+        // Lo que NO aplica a RQ (pagos, importes, monedas, fiscal) queda null
+        // y BasApiClient (JsonIgnoreCondition.WhenWritingNull) lo omite.
+        // Helper local: vacío → null.
+        static string? V(string s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
         var req = new ComprobanteCompraRequest
         {
-            FechaCreacion          = DateTime.UtcNow.ToString("o"),         // ISO 8601
-            Fecha                  = DateTime.Today.ToString("yyyy-MM-dd"),
-            Comprobante            = "RQ",                                  // requerimiento de compra
-            Prefijo                = Prefijo,
-            Numero                 = 0,                                     // 0 = lo asigna BAS
-            Proveedor              = Proveedor,
-            Nombre                 = NombreProveedor,
-            MonedaCtaCte           = MonedaCtaCte,
-            MonedaComprobante      = MonedaComprobante,
-            TotalGravado           = TotalGravado,
-            TotalIva               = TotalIvaCab,
-            Total                  = TotalCab,
-            MetodoPago             = MetodoPago,
-            Caja                   = Caja,
-            Comprador              = Comprador,
-            Empresa                = Empresa,
-            Sucursal               = Sucursal,
-            ImputacionContable     = ImputacionContable,
-            Deposito               = Deposito,
-            Usuario                = Sesion.userName,
-            ObservacionComprobante = Observacion,
-            NumeroCAIoCAE          = NumeroCAIoCAE,
-            VencimientoCAIoCAE     = VencimientoCAIoCAE,
+            // Obligatorios
+            FechaCreacion      = DateTime.UtcNow.ToString("o"),
+            Fecha              = DateTime.Today.ToString("yyyy-MM-dd"),
+            Comprobante        = "RQ",
+            Prefijo            = Prefijo,
+            Numero             = 0,                                    // BAS asigna
+            Usuario            = Sesion.userName,
+            Sucursal           = Sucursal,
+            ImputacionContable = ImputacionContable,
+            Deposito           = Deposito,
+
+            // Opcionales: si vacíos quedan null y se omiten
+            Proveedor              = V(Proveedor),
+            Nombre                 = V(NombreProveedor),
+            ObservacionComprobante = V(Observacion),                   // se manda solo si tiene texto
+
+            // NO aplican a RQ — quedan null
+            // Empresa, Comprador, Moneda*, Total*, MetodoPago, Caja, CAI/CAE,
+            // Vencimientos, Efectivos → no se setean, default null
         };
 
         // Items
-        // TODO SQL/BAS: cada f.Budget debe persistirse contra el ítem. ItemRequest
-        // de BAS no tiene un campo "Budget" directo — se vincula via ImputacionContable
-        // o a una tabla auxiliar (Requerimiento_Item_Budget). Resolver al integrar.
+        // Para RQ NO se envían Cantidad/Precio/Importes/TasaIva (sin base SQL todavía).
+        // Budget/Rubro/Subrubro de la UI tampoco viajan al JSON (no hay campo BAS).
         foreach (var f in Filas.Where(x => x.Cantidad > 0 || !string.IsNullOrWhiteSpace(x.CodItem)))
         {
             req.Items.Add(new ItemRequest
             {
-                CodigoItem               = f.CodItem,
-                NumeroUnidadMedida       = NumeroUnidadMedidaDefault, // TODO SQL: convertir f.UnidadMedida -> número en BAS
-                CantidadPrimeraUnidad    = f.Cantidad,
-                PrecioUnitario           = 0m,    // TODO SQL: precio unitario del item (lista de precios)
-                ImporteTotal             = 0m,    // TODO: calcular
-                ImporteGravado           = 0m,    // TODO: calcular
-                ImporteIva               = 0m,    // TODO: calcular
-                TasaIva                  = TasaIvaDefault,
-                PendienteRemitirFacturar = PendienteRemitirFacturarDefault,
-                TipoEntrega              = TipoEntregaDefault,
+                PendienteRemitirFacturar = PendienteRemitirFacturarDefault, // "A"
+                TipoEntrega              = TipoEntregaDefault,              // "O"
+
+                CodigoItem         = V(f.CodItem),
+                NumeroUnidadMedida = V(f.UnidadMedida),                     // TODO SQL: traducir a número BAS
+
+                // Resto = null (no aplica a RQ)
             });
         }
 
