@@ -337,7 +337,9 @@
 
             await CargarSolicitudesAsync();
 
-            if (Notif.Activa)
+            // Auto-cierre solo para Éxito (5s). Los errores quedan hasta que
+            // el usuario haga click en la X — son críticos y necesitan lectura.
+            if (Notif.Activa && Notif.Tipo == TipoNotificacion.Exito)
             {
                 _ = Task.Run(async () =>
                 {

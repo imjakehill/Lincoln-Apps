@@ -5,6 +5,7 @@
 @inject SesionService Sesion
 @inject BasApiClient BasApi
 @inject RequerimientoService ReqService
+@inject IJSRuntime JS
 @using System.Diagnostics
 
 @* ═══════════════════════════════════════════════════════════════
@@ -369,7 +370,13 @@
 
             @* Lista de items *@
             <div class="modal-items-lista">
-                @if (CatalogoItems.Count == 0)
+                @if (!string.IsNullOrEmpty(CatalogoError))
+                {
+                    <div class="modal-items-vacio">
+                        Error consultando ITEMS:<br /><strong>@CatalogoError</strong>
+                    </div>
+                }
+                else if (CatalogoItems.Count == 0)
                 {
                     <div class="modal-items-vacio">
                         Catálogo vacío.
@@ -387,8 +394,7 @@
                         <thead>
                             <tr>
                                 <th>CÓDIGO</th>
-                                <th>NOMBRE</th>
-                                <th>UDM</th>
+                                <th>DESCRIPCIÓN</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -398,8 +404,7 @@
                                 <tr class="modal-items-fila"
                                     @ondblclick="() => SeleccionarItemCatalogo(it)">
                                     <td class="vr-mono">@it.Codigo</td>
-                                    <td>@it.Nombre</td>
-                                    <td>@it.UnidadMedida</td>
+                                    <td>@it.Descripcion</td>
                                     <td>
                                         <button class="btn-modal-confirmar btn-seleccionar-item"
                                                 @onclick="() => SeleccionarItemCatalogo(it)">
@@ -438,9 +443,8 @@
             //   SELECT budget_codigo, descripcion_budget FROM Budget ORDER BY budget_codigo
             CargarOpcionesBudget();
 
-            // TODO SQL: cargar catálogo de items
-            //   SELECT CODIGO, DESCRIPCION, UDM FROM ITEMS WHERE ACTIVO=1 ORDER BY CODIGO
-            CargarCatalogoItems();
+            // Catálogo de items desde SQL: SELECT CODITEM, DESCRIPCION FROM ITEMS
+            await CargarCatalogoItemsAsync();
 
             // Departamento = usuario logueado (mientras no haya base con la relación real).
             // TODO SQL futuro: SELECT depto FROM Usuarios WHERE username = @Sesion.userName
@@ -504,21 +508,29 @@
     // ── Catálogo de items (modal lupa) ────────────────────────
     private class CatalogoItem
     {
-        public string Codigo        { get; set; } = string.Empty;
-        public string Nombre        { get; set; } = string.Empty;
-        public string UnidadMedida  { get; set; } = string.Empty;
+        public string Codigo      { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
     }
 
     private List<CatalogoItem> CatalogoItems { get; set; } = new();
+    private string CatalogoError { get; set; } = string.Empty;
 
-    private void CargarCatalogoItems()
+    private async Task CargarCatalogoItemsAsync()
     {
-        // TODO SQL: reemplazar este placeholder por la consulta real
-        //   SELECT CODIGO, DESCRIPCION, UDM FROM ITEMS WHERE ACTIVO=1 ORDER BY CODIGO
-        CatalogoItems = new List<CatalogoItem>
+        try
         {
-            // datos dummy hasta que esté la consulta SQL
-        };
+            var rows = await ReqService.GetCatalogoItemsAsync();
+            CatalogoItems = rows
+                .Select(r => new CatalogoItem { Codigo = r.Codigo, Descripcion = r.Descripcion })
+                .ToList();
+            CatalogoError = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR catalogo items] {ex.Message}");
+            CatalogoItems = new();
+            CatalogoError = ex.Message;
+        }
     }
 
     private bool   MostrarModalItems   { get; set; } = false;
@@ -535,7 +547,7 @@
             string q = BusquedaItem.Trim().ToLowerInvariant();
             return CatalogoItems.Where(i =>
                 i.Codigo.ToLowerInvariant().Contains(q) ||
-                i.Nombre.ToLowerInvariant().Contains(q));
+                i.Descripcion.ToLowerInvariant().Contains(q));
         }
     }
 
@@ -557,8 +569,7 @@
     {
         if (FilaParaCatalogo is null) return;
 
-        FilaParaCatalogo.CodItem      = item.Codigo;
-        FilaParaCatalogo.UnidadMedida = item.UnidadMedida;
+        FilaParaCatalogo.CodItem = item.Codigo;
 
         CerrarModalItems();
     }
@@ -727,67 +738,88 @@
 
     private ComprobanteCompraRequest ConstruirRequest()
     {
-        // JSON enviado a /api/ComprobantesCompra para un RQ.
-        // Lo que NO aplica a RQ (pagos, importes, monedas, fiscal) queda null
-        // y BasApiClient (JsonIgnoreCondition.WhenWritingNull) lo omite.
-        // Helper local: vacío → null.
+        // Réplica del Program.cs original que funcionó en LincolnTEST.
+        // Mantengo del formulario lo que el usuario carga: Prefijo, Observación,
+        // Usuario logueado, Proveedor (si lo escribió) y CodItem de cada fila.
+        // El resto va HARDCODEADO igual al original — cuando esté la base SQL
+        // se reemplazan los hardcodes por los valores reales del UI.
         static string? V(string s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+        string prefijoFinal = string.IsNullOrWhiteSpace(Prefijo) ? "0001" : Prefijo.Trim();
+        string usuarioFinal = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName;
 
         var req = new ComprobanteCompraRequest
         {
-            // Obligatorios
-            FechaCreacion      = DateTime.UtcNow.ToString("o"),
-            Fecha              = DateTime.Today.ToString("yyyy-MM-dd"),
-            Comprobante        = "RQ",
-            Prefijo            = Prefijo,
-            Numero             = 0,                                    // BAS asigna
-            Usuario            = Sesion.userName,
-            Sucursal           = Sucursal,
-            ImputacionContable = ImputacionContable,
-            Deposito           = Deposito,
-
-            // Opcionales: si vacíos quedan null y se omiten
-            Proveedor              = V(Proveedor),
-            Nombre                 = V(NombreProveedor),
-            ObservacionComprobante = V(Observacion),                   // se manda solo si tiene texto
-
-            // NO aplican a RQ — quedan null
-            // Empresa, Comprador, Moneda*, Total*, MetodoPago, Caja, CAI/CAE,
-            // Vencimientos, Efectivos → no se setean, default null
+            // ── Cabecera (replica del Program.cs original) ───────
+            FechaCreacion          = DateTime.UtcNow.ToString("o"),
+            Fecha                  = DateTime.Today.ToString("yyyy-MM-dd"),
+            Comprobante            = "RQ",
+            Prefijo                = prefijoFinal,
+            Numero                 = 0,                                    // BAS asigna
+            Proveedor              = V(Proveedor)       ?? "P0003",        // OPCIONAL — default original
+            Nombre                 = V(NombreProveedor) ?? "Proveedor de Prueba",
+            MonedaCtaCte           = "",
+            MonedaComprobante      = "",
+            TotalGravado           = 1000m,
+            TotalIva               = 210m,
+            Total                  = 1210m,
+            MetodoPago             = "C",
+            Caja                   = "0001",
+            Comprador              = "COM",
+            Empresa                = 1,
+            Sucursal               = Sucursal,                             // hoy = 1
+            ImputacionContable     = ImputacionContable,                   // hoy = 501
+            Deposito               = Deposito,                             // hoy = 1
+            Usuario                = usuarioFinal,
+            NumeroCAIoCAE          = "",
+            ObservacionComprobante = V(Observacion),                       // solo si el usuario escribió
         };
 
-        // Items
-        // Para RQ NO se envían Cantidad/Precio/Importes/TasaIva (sin base SQL todavía).
-        // Budget/Rubro/Subrubro de la UI tampoco viajan al JSON (no hay campo BAS).
-        foreach (var f in Filas.Where(x => x.Cantidad > 0 || !string.IsNullOrWhiteSpace(x.CodItem)))
+        // ── Items (replica del original) ──────────────────────
+        // Si el usuario no cargó ningún CodItem, mando uno de prueba para no romper el SP.
+        var filasConDatos = Filas
+            .Where(x => x.Cantidad > 0 || !string.IsNullOrWhiteSpace(x.CodItem))
+            .ToList();
+
+        if (filasConDatos.Count == 0)
+            filasConDatos.Add(new FilaItem { CodItem = "B16315" });
+
+        foreach (var f in filasConDatos)
         {
             req.Items.Add(new ItemRequest
             {
+                CodigoItem               = V(f.CodItem) ?? "B16315",
+                NumeroUnidadMedida       = V(f.UnidadMedida) ?? "1",
+                CantidadPrimeraUnidad    = 1m,
+                PrecioUnitario           = 1000m,
+                ImporteTotal             = 1210m,
+                ImporteGravado           = 1000m,
+                ImporteIva               = 210m,
+                TasaIva                  = 21m,
                 PendienteRemitirFacturar = PendienteRemitirFacturarDefault, // "A"
                 TipoEntrega              = TipoEntregaDefault,              // "O"
-
-                CodigoItem         = V(f.CodItem),
-                NumeroUnidadMedida = V(f.UnidadMedida),                     // TODO SQL: traducir a número BAS
-
-                // Resto = null (no aplica a RQ)
             });
         }
 
-        // Vencimientos — TODO: validar si para RQ se requiere alguno.
-        // Si hace falta, descomentar y completar:
-        // req.Vencimientos.Add(new Vencimiento
-        // {
-        //     FechaVencimiento = DateTime.Today.ToString("yyyy-MM-dd"),
-        //     Importe          = TotalCab
-        // });
+        // ── Vencimientos y Efectivos (estaban en el original) ─
+        req.Vencimientos = new List<Vencimiento>
+        {
+            new Vencimiento
+            {
+                FechaVencimiento = DateTime.Today.ToString("yyyy-MM-dd"),
+                Importe          = 1210m
+            }
+        };
 
-        // Efectivos — TODO: idem.
-        // req.Efectivos.Add(new Efectivo
-        // {
-        //     MedioPago = "EFE",
-        //     Importe   = TotalCab,
-        //     Cantidad  = 1
-        // });
+        req.Efectivos = new List<Efectivo>
+        {
+            new Efectivo
+            {
+                MedioPago = "EFE",
+                Importe   = 1210m,
+                Cantidad  = 1
+            }
+        };
 
         return req;
     }
@@ -796,40 +828,118 @@
     {
         if (Guardando) return;
 
-        Debug.WriteLine($"[INFO] Confirmando carga de {Filas.Count} ítems para req N° {NroRequerimiento}");
+        var logger = new AppHelper();
+        logger.GenerateLog("info", $"Carga iniciada — req N° {NroRequerimiento}, {Filas.Count} ítems, usuario={Sesion.userName}");
 
         Guardando = true;
         StateHasChanged();
 
-        ComprobanteResponse? resultado = null;
-        string? errorMsg = null;
+        BasApiResult result;
         try
         {
             var req = ConstruirRequest();
-            resultado = await BasApi.EnviarComprobanteCompraAsync(req);
+            result = await BasApi.EnviarComprobanteCompraAsync(req);
         }
         catch (Exception ex)
         {
-            errorMsg = ex.Message;
-            Debug.WriteLine($"[ERROR] Excepción al enviar comprobante: {ex}");
+            // Excepción no manejada por el cliente — la encapsulo igual para el flujo unificado.
+            result = new BasApiResult { IsSuccess = false, ErrorMessage = ex.Message };
+            logger.GenerateLog("error", $"Excepción al enviar comprobante: {ex}");
+            await TryConsoleLogAsync("error", "[SupplyOn] Excepción inesperada", ex.ToString());
         }
 
-        Guardando = false;
+        Guardando    = false;
         MostrarModal = false;
 
-        if (resultado != null)
+        if (result.IsSuccess)
         {
-            string nroFinal = resultado.Comprobantes?.FirstOrDefault()?.NumeroFinal ?? NroRequerimiento;
+            string nroFinal = result.Response?.Comprobantes?.FirstOrDefault()?.NumeroFinal ?? NroRequerimiento;
+            logger.GenerateLog("info", $"Carga OK — N° {nroFinal} (status {result.Status})");
             Notif.Mostrar($"Requerimiento N° {nroFinal} cargado correctamente.", TipoNotificacion.Exito);
             Nav.NavigateTo("/home");
+            return;
         }
-        else
+
+        // ── Falla: loguear todo, mostrar al usuario, escupir a la consola del browser ──
+        string mensajeLimpio = ExtraerMensajeError(result);
+
+        logger.GenerateLog("error",
+            $"Carga FAIL — endpoint={result.Endpoint} status={result.Status} " +
+            $"errorMsg={result.ErrorMessage} rawBody={result.RawBody}");
+
+        await TryConsoleLogAsync("group", "[SupplyOn] Falla al cargar requerimiento", string.Empty);
+        await TryConsoleLogAsync("log",   "Endpoint:",     result.Endpoint);
+        await TryConsoleLogAsync("log",   "Status HTTP:",  result.Status.ToString());
+        await TryConsoleLogAsync("log",   "Request JSON:", result.RequestJson ?? string.Empty);
+        await TryConsoleLogAsync("error", "Response body:", result.RawBody ?? string.Empty);
+        if (!string.IsNullOrEmpty(result.ErrorMessage))
+            await TryConsoleLogAsync("error", "Excepción:", result.ErrorMessage);
+        await TryConsoleLogAsync("groupEnd", string.Empty, string.Empty);
+
+        // El error se muestra IN-PAGE en CreateReq (no se redirige a Home).
+        // Usamos el mismo banner rojo de validación local.
+        MensajeValidacion = mensajeLimpio;
+        StateHasChanged();
+    }
+
+    // Extrae el "title" si la respuesta es un ProblemDetails (JSON con "title"),
+    // sino devuelve el body crudo truncado. Si hubo excepción, devuelve esa.
+    private static string ExtraerMensajeError(BasApiResult r)
+    {
+        if (!string.IsNullOrEmpty(r.ErrorMessage))
+            return $"Error de red: {r.ErrorMessage}";
+
+        if (!string.IsNullOrEmpty(r.RawBody))
         {
-            string detalle = string.IsNullOrEmpty(errorMsg) ? "" : $" Detalle: {errorMsg}";
-            Notif.Mostrar($"No se pudo cargar el requerimiento.{detalle}", TipoNotificacion.Error);
-            StateHasChanged();
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(r.RawBody);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                    && doc.RootElement.TryGetProperty("title", out var titleProp))
+                {
+                    string? title = titleProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(title))
+                        return title;
+                }
+            }
+            catch { /* no era JSON parseable, caigo al body crudo */ }
+
+            return $"HTTP {r.Status}: {Truncar(r.RawBody, 500)}";
+        }
+
+        return $"Falla sin detalle (HTTP {r.Status}).";
+    }
+
+    // Helper: escribe en la consola del navegador. Si falla (prerender / cierre), lo ignora.
+    private async Task TryConsoleLogAsync(string level, string label, string payload)
+    {
+        try
+        {
+            // Mapeo level → console.X
+            string fn = level switch
+            {
+                "error"    => "console.error",
+                "warn"     => "console.warn",
+                "group"    => "console.group",
+                "groupEnd" => "console.groupEnd",
+                _          => "console.log"
+            };
+
+            if (fn == "console.groupEnd")
+                await JS.InvokeVoidAsync(fn);
+            else if (string.IsNullOrEmpty(payload))
+                await JS.InvokeVoidAsync(fn, label);
+            else
+                await JS.InvokeVoidAsync(fn, label, payload);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[CreateReq] consola browser no disponible: {ex.Message}");
         }
     }
+
+    private static string Truncar(string s, int max) =>
+        string.IsNullOrEmpty(s) ? string.Empty : (s.Length > max ? s.Substring(0, max) + "..." : s);
 
     // ── Navegación ────────────────────────────────────────────
 

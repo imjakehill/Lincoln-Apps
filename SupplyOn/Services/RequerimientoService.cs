@@ -241,6 +241,33 @@ public class RequerimientoService
     }
 
     // ────────────────────────────────────────────────────────────
+    //   CATÁLOGO DE ITEMS (modal lupa de CreateReq)
+    //   SELECT CODITEM, DESCRIPCION FROM ITEMS
+    // ────────────────────────────────────────────────────────────
+    public async Task<List<(string Codigo, string Descripcion)>> GetCatalogoItemsAsync()
+    {
+        const string sql = @"
+            SELECT CODITM, DESCRIPCION
+            FROM ITEMS
+            ORDER BY DESCRIPCION DESC";
+
+        var result = new List<(string, string)>();
+
+        using var cn = new SqlConnection(_connectionString);
+        await cn.OpenAsync();
+        using var cmd = new SqlCommand(sql, cn);
+        using var rd = await cmd.ExecuteReaderAsync();
+        while (await rd.ReadAsync())
+        {
+            result.Add((
+                ObtenerString(rd, "CODITM"),
+                ObtenerString(rd, "DESCRIPCION")
+            ));
+        }
+        return result;
+    }
+
+    // ────────────────────────────────────────────────────────────
     //   ACTUALIZACIÓN (desde el modal de edición)
     //   Sólo campos editables: FechaRequerida (FECHAEXT), Prefijo,
     //   Observación y Solicitante.
