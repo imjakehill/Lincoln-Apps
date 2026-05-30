@@ -65,7 +65,10 @@
             </div>
             <div class="req-estado">
                 <span class="estado-label">Estado</span>
-                <span class="estado-badge">En proceso</span>
+                <span class="estado-badge estado-en-proceso">
+                    <span class="estado-dot"></span>
+                    En proceso
+                </span>
             </div>
         </div>
 
@@ -75,12 +78,15 @@
             @* Columna izquierda *@
             <div class="campos-col">
 
-                @* NOTA: Budget se movió a la tabla de ítems (1 budget por ítem). *@
-
-                @* Solicitante — texto libre, no obligatorio (referencia adicional) *@
+                @* Solicitante — texto libre, no obligatorio *@
                 <div class="campo-grupo">
-                    <label class="campo-label">Solicitante</label>
-                    <input class="campo-input"
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4z"/>
+                        </svg>
+                        Solicitante
+                    </label>
+                    <input class="campo-input campo-input-md"
                            type="text"
                            @bind="Solicitante"
                            @bind:event="oninput"
@@ -90,12 +96,16 @@
                 @* Departamento — viene del usuario logueado, no editable.
                    TODO SQL: SELECT depto FROM Usuarios WHERE username=@Sesion.userName *@
                 <div class="campo-grupo">
-                    <label class="campo-label">Departamento</label>
-                    <input class="campo-input campo-readonly"
-                           type="text"
-                           value="@Departamento"
-                           readonly
-                           placeholder="(viene del usuario)" />
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M6.5 0a.5.5 0 0 0-.5.5V3H1.5A1.5 1.5 0 0 0 0 4.5V14H8v-3h.5a.5.5 0 0 1 .5.5v2.5H16V5.5A1.5 1.5 0 0 0 14.5 4H10V.5a.5.5 0 0 0-.5-.5h-3zM2 7h1v1H2V7zm2 0h1v1H4V7zm-2 2h1v1H2V9zm2 0h1v1H4V9zm-2 2h1v1H2v-1zm2 0h1v1H4v-1zM7 5h1v1H7V5zm2 0h1v1H9V5zM7 7h1v1H7V7zm2 0h1v1H9V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM7 9h1v1H7V9zm2 0h1v1H9V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/>
+                        </svg>
+                        Departamento
+                    </label>
+                    <div class="campo-readonly-box">
+                        <span class="campo-readonly-value">@(string.IsNullOrWhiteSpace(Departamento) ? "—" : Departamento)</span>
+                        <span class="campo-readonly-hint">del usuario</span>
+                    </div>
                 </div>
 
             </div>
@@ -105,31 +115,45 @@
 
                 @* Fecha Requerida — date picker, obligatorio, sin fechas pasadas *@
                 <div class="campo-grupo">
-                    <label class="campo-label">Fecha Requerida *</label>
-                    <input class="campo-input campo-fecha"
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                        </svg>
+                        Fecha Requerida <span class="campo-asterisco">*</span>
+                    </label>
+                    <input class="campo-input campo-fecha campo-input-md"
                            type="date"
                            @bind="FechaRequerida"
                            min="@DateTime.Today.ToString("yyyy-MM-dd")" />
                 </div>
 
+                @* Tipo de pedido — badge dinámico calculado desde FechaRequerida *@
+                <div class="campo-grupo">
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                        </svg>
+                        Tipo de pedido
+                    </label>
+                    <div class="tipo-pedido-badge tipo-@TipoPedido.ToLowerInvariant().Replace("á","a")">
+                        @TipoPedido
+                    </div>
+                </div>
+
                 @* Prefijo — editable *@
                 <div class="campo-grupo">
-                    <label class="campo-label">Prefijo</label>
-                    <input class="campo-input"
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.371 2.371 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976l2.61-3.045zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0zM1.5 8.5A.5.5 0 0 1 2 9v6h12V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        Prefijo
+                    </label>
+                    <input class="campo-input campo-input-md"
                            type="text"
                            @bind="Prefijo"
                            @bind:event="oninput"
-                           placeholder="Ingrese prefijo" />
-                </div>
-
-                @* Tipo de pedido — read-only, calculado desde Fecha Requerida.
-                   Regla: <=5 dias Urgente, 6-10 Media, >10 Standard *@
-                <div class="campo-grupo">
-                    <label class="campo-label">Tipo de pedido</label>
-                    <input class="campo-input campo-readonly"
-                           type="text"
-                           value="@TipoPedido"
-                           readonly />
+                           placeholder="0001" />
                 </div>
 
             </div>
@@ -137,25 +161,39 @@
             @* Columna derecha *@
             <div class="campos-col campos-col-derecha">
 
-                @* Observación — textarea, opcional, máx 500 *@
+                @* Observación — textarea, opcional, máx 500 + contador *@
                 <div class="campo-grupo campo-grupo-obs">
-                    <label class="campo-label">Observación del RQ.</label>
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                        </svg>
+                        Observación del RQ
+                        <span class="campo-contador">@Observacion.Length / 500</span>
+                    </label>
                     <textarea class="campo-textarea"
                               @bind="Observacion"
                               @bind:event="oninput"
                               maxlength="500"
-                              placeholder="Ingrese observaciones"
+                              placeholder="Detalles, contexto o aclaraciones del pedido..."
                               rows="4"></textarea>
                 </div>
 
-                @* Autorización adjunta — placeholder visual.
+                @* Autorización adjunta — drop-zone visual.
                    TODO: implementar InputFile con validación pdf/jpg/png *@
                 <div class="campo-grupo">
-                    <label class="campo-label">Autorización adjunta</label>
-                    <div class="campo-adjunto">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <label class="campo-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0V3z"/>
                         </svg>
+                        Autorización adjunta
+                    </label>
+                    <div class="campo-dropzone">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                        </svg>
+                        <span class="dropzone-text">Adjuntar archivo</span>
+                        <span class="dropzone-formats">PDF · JPG · PNG</span>
                     </div>
                 </div>
 
