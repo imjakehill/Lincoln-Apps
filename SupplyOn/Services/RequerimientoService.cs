@@ -249,6 +249,7 @@ public class RequerimientoService
         const string sql = @"
             SELECT CODITM, DESCRIPCION
             FROM ITEMS
+            WHERE SUSPENDIDOS=0
             ORDER BY DESCRIPCION DESC";
 
         var result = new List<(string, string)>();
