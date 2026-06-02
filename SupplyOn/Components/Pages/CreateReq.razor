@@ -403,7 +403,7 @@
                 <input type="text" class="modal-items-input"
                        @bind="BusquedaItem"
                        @bind:event="oninput"
-                       placeholder="Buscar por código o nombre..." />
+                       placeholder="Buscar por código o descripción..." />
             </div>
 
             @* Lista de items *@
@@ -622,7 +622,7 @@
     private string Departamento  { get; set; } = string.Empty; // TODO SQL (depto del usuario)
     private string Solicitante   { get; set; } = string.Empty; // opcional
     private string Prefijo       { get; set; } = "0001";
-    private DateTime FechaRequerida { get; set; } = DateTime.Today.AddDays(10); // obligatoria
+    private DateTime FechaRequerida { get; set; } = DateTime.Today; // obligatoria
     private string Observacion   { get; set; } = string.Empty;
     private string IdiomaSeleccionado { get; set; } = "es";
 
@@ -753,20 +753,11 @@
             return false;
         }
 
-        // Validación afloja: alcanza con que al menos un ítem tenga ALGÚN dato cargado.
-        // Cantidad / UDM / Budget no son exigidos por la app hasta que esté la base SQL.
-        bool hayAlgunItem = Filas.Any(f =>
-            !string.IsNullOrWhiteSpace(f.CodItem) ||
-            !string.IsNullOrWhiteSpace(f.UnidadMedida) ||
-            !string.IsNullOrWhiteSpace(f.Budget) ||
-            !string.IsNullOrWhiteSpace(f.ProveedorSugerido) ||
-            !string.IsNullOrWhiteSpace(f.ObservacionItem) ||
-            f.Cantidad > 0 ||
-            f.CantidadUDM > 0);
-
-        if (!hayAlgunItem)
+        // Debe haber al menos una fila con CodItem cargado (sin código no hay item válido para BAS).
+        bool hayItemConCodigo = Filas.Any(f => !string.IsNullOrWhiteSpace(f.CodItem));
+        if (!hayItemConCodigo)
         {
-            mensaje = "Debe cargar al menos un ítem con algún dato.";
+            mensaje = "Debe cargar al menos un ítem con código.";
             return false;
         }
 
@@ -826,7 +817,7 @@
         {
             req.Items.Add(new ItemRequest
             {
-                CodigoItem               = V(f.CodItem) ?? "B16315",
+                CodigoItem               = V(f.CodItem),
                 NumeroUnidadMedida       = V(f.UnidadMedida) ?? "1",
                 CantidadPrimeraUnidad    = 1m,
                 PrecioUnitario           = 1000m,
