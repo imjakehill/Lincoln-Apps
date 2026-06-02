@@ -24,8 +24,8 @@ public class ComprobanteCompraRequest
 
     // ── Opcionales: si quedan en null NO se serializan ────
     // (BasApiClient usa JsonIgnoreCondition.WhenWritingNull)
-    public string?  Proveedor              { get; set; }       // OPCIONAL en RQ
-    public string?  Nombre                 { get; set; }       // OPCIONAL
+    //public string?  Proveedor              { get; set; }       // OPCIONAL en RQ
+    //public string?  Nombre                 { get; set; }       // OPCIONAL
     public string?  ObservacionComprobante { get; set; }       // OPCIONAL — se manda si tiene texto
     public string?  Comprador              { get; set; }
 

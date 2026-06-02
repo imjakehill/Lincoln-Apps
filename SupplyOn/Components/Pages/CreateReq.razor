@@ -296,11 +296,21 @@
                         </svg>
                     </div>
 
-                    @* PROVEEDOR SUGERIDO — texto libre, opcional *@
-                    <input class="celda-input" type="text"
-                           @bind="fila.ProveedorSugerido"
-                           @bind:event="oninput"
-                           placeholder="Proveedor" />
+                    @* PROVEEDOR SUGERIDO — texto libre opcional + botón lupa para catálogo *@
+                    <div class="celda-coditem">
+                        <input class="celda-input" type="text"
+                               @bind="fila.ProveedorSugerido"
+                               @bind:event="oninput"
+                               placeholder="Proveedor" />
+                        <button type="button"
+                                class="btn-lupa-cell"
+                                @onclick="() => AbrirModalProveedores(fila)"
+                                title="Buscar proveedor del catálogo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
+                    </div>
 
                     @* OBSERVACIÓN ÍTEM — editable, más ancho *@
                     <input class="celda-input celda-obs" type="text"
@@ -466,6 +476,89 @@
     </div>
 }
 
+@* ── MODAL DE CATÁLOGO DE PROVEEDORES ─────────────────────────── *@
+@if (MostrarModalProveedores)
+{
+    <div class="modal-overlay" @onclick="CerrarModalProveedores">
+        <div class="modal-items-caja" @onclick:stopPropagation="true">
+            <div class="modal-items-header">
+                <h3 class="modal-titulo">Catálogo de proveedores</h3>
+                <button class="modal-cerrar-x" @onclick="CerrarModalProveedores" title="Cerrar">✕</button>
+            </div>
+
+            @* Buscador *@
+            <div class="modal-items-buscador">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <input type="text" class="modal-items-input"
+                       @bind="BusquedaProveedor"
+                       @bind:event="oninput"
+                       placeholder="Buscar por código, nombre o fantasía..." />
+            </div>
+
+            @* Lista de proveedores *@
+            <div class="modal-items-lista">
+                @if (!string.IsNullOrEmpty(ProveedoresError))
+                {
+                    <div class="modal-items-vacio">
+                        Error consultando ctactes:<br /><strong>@ProveedoresError</strong>
+                    </div>
+                }
+                else if (CatalogoProveedores.Count == 0)
+                {
+                    <div class="modal-items-vacio">
+                        Catálogo vacío.
+                    </div>
+                }
+                else if (!CatalogoProveedoresFiltrados.Any())
+                {
+                    <div class="modal-items-vacio">
+                        Sin coincidencias para "<strong>@BusquedaProveedor</strong>".
+                    </div>
+                }
+                else
+                {
+                    <table class="modal-items-tabla">
+                        <thead>
+                            <tr>
+                                <th>COD. PROVEEDOR</th>
+                                <th>NOMBRE</th>
+                                <th>FANTASIA</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in CatalogoProveedoresFiltrados)
+                            {
+                                <tr class="modal-items-fila"
+                                    @ondblclick="() => SeleccionarProveedorCatalogo(p)">
+                                    <td class="vr-mono">@p.Codigo</td>
+                                    <td>@p.Nombre</td>
+                                    <td>@p.Fantasia</td>
+                                    <td>
+                                        <button class="btn-modal-confirmar btn-seleccionar-item"
+                                                @onclick="() => SeleccionarProveedorCatalogo(p)">
+                                            Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="modal-items-footer">
+                <span class="modal-items-contador">
+                    @CatalogoProveedoresFiltrados.Count() de @CatalogoProveedores.Count
+                </span>
+                <button class="btn-modal-cancelar" @onclick="CerrarModalProveedores">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
 
@@ -483,6 +576,9 @@
 
             // Catálogo de items desde SQL: SELECT CODITEM, DESCRIPCION FROM ITEMS
             await CargarCatalogoItemsAsync();
+
+            // Catálogo de proveedores desde SQL: SELECT CODCTACTE, NOMBRE, FANTASIA FROM ctactes WHERE cueprefi='P'
+            await CargarCatalogoProveedoresAsync();
 
             // Departamento = usuario logueado (mientras no haya base con la relación real).
             // TODO SQL futuro: SELECT depto FROM Usuarios WHERE username = @Sesion.userName
@@ -541,7 +637,7 @@
         {
             // datos dummy hasta que esté la consulta SQL
         };
-    }
+    } // Budget se va a cambiar por Centros de Apropiacion
 
     // ── Catálogo de items (modal lupa) ────────────────────────
     private class CatalogoItem
@@ -612,9 +708,80 @@
         CerrarModalItems();
     }
 
+    // ── Catálogo de proveedores (modal lupa) ──────────────────
+    private class CatalogoProveedor
+    {
+        public string Codigo   { get; set; } = string.Empty;
+        public string Nombre   { get; set; } = string.Empty;
+        public string Fantasia { get; set; } = string.Empty;
+    }
+
+    private List<CatalogoProveedor> CatalogoProveedores { get; set; } = new();
+    private string ProveedoresError { get; set; } = string.Empty;
+
+    private async Task CargarCatalogoProveedoresAsync()
+    {
+        try
+        {
+            var rows = await ReqService.GetCatalogoProveedoresAsync();
+            CatalogoProveedores = rows
+                .Select(r => new CatalogoProveedor { Codigo = r.Codigo, Nombre = r.Nombre, Fantasia = r.Fantasia })
+                .ToList();
+            ProveedoresError = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ERROR catalogo proveedores] {ex.Message}");
+            CatalogoProveedores = new();
+            ProveedoresError = ex.Message;
+        }
+    }
+
+    private bool   MostrarModalProveedores  { get; set; } = false;
+    private string BusquedaProveedor        { get; set; } = string.Empty;
+    private FilaItem? FilaParaProveedor     { get; set; }
+
+    private IEnumerable<CatalogoProveedor> CatalogoProveedoresFiltrados
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(BusquedaProveedor))
+                return CatalogoProveedores;
+
+            string q = BusquedaProveedor.Trim().ToLowerInvariant();
+            return CatalogoProveedores.Where(p =>
+                p.Codigo.ToLowerInvariant().Contains(q)   ||
+                p.Nombre.ToLowerInvariant().Contains(q)   ||
+                p.Fantasia.ToLowerInvariant().Contains(q));
+        }
+    }
+
+    private void AbrirModalProveedores(FilaItem fila)
+    {
+        FilaParaProveedor       = fila;
+        BusquedaProveedor       = string.Empty;
+        MostrarModalProveedores = true;
+    }
+
+    private void CerrarModalProveedores()
+    {
+        MostrarModalProveedores = false;
+        FilaParaProveedor       = null;
+        BusquedaProveedor       = string.Empty;
+    }
+
+    private void SeleccionarProveedorCatalogo(CatalogoProveedor prov)
+    {
+        if (FilaParaProveedor is null) return;
+
+        FilaParaProveedor.ProveedorSugerido = prov.Codigo;
+
+        CerrarModalProveedores();
+    }
+
     // ── Variables del formulario header (UI) ──────────────────
 
-    //NroRequerimiento se carga desde TRANSAC (último + 1)
+    //NroRequerimiento se carga desde TRANSAC (ultimo + 1)
     private string NroRequerimiento { get; set; } = "000001";
 
     // Budget ahora vive en cada FilaItem (1 budget por ítem). Ver OnBudgetItemCambiado abajo.
@@ -775,7 +942,7 @@
         static string? V(string s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
         string prefijoFinal = string.IsNullOrWhiteSpace(Prefijo) ? "0001" : Prefijo.Trim();
-        string usuarioFinal = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName;
+        string usuarioFinal = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName; // cambiar esta hardcodeando el usuario
 
         var req = new ComprobanteCompraRequest
         {
@@ -784,9 +951,9 @@
             Fecha                  = DateTime.Today.ToString("yyyy-MM-dd"),
             Comprobante            = "RQ",
             Prefijo                = prefijoFinal,
-            Numero                 = 0,                                    // BAS asigna
-            Proveedor              = V(Proveedor)       ?? "P0003",        // OPCIONAL — default original
-            Nombre                 = V(NombreProveedor) ?? "Proveedor de Prueba",
+            Numero                 = 0,                                    // bas asigna
+            //Proveedor              = V(Proveedor),
+            //Nombre                 = V(NombreProveedor) ?? "Proveedor de Prueba",
             MonedaCtaCte           = "",
             MonedaComprobante      = "",
             TotalGravado           = 1000m,
@@ -796,22 +963,19 @@
             Caja                   = "0001",
             Comprador              = "COM",
             Empresa                = 1,
-            Sucursal               = Sucursal,                             // hoy = 1
-            ImputacionContable     = ImputacionContable,                   // hoy = 501
-            Deposito               = Deposito,                             // hoy = 1
+            Sucursal               = Sucursal,                             
+            ImputacionContable     = ImputacionContable,                   
+            Deposito               = Deposito,                             
             Usuario                = usuarioFinal,
             NumeroCAIoCAE          = "",
             ObservacionComprobante = V(Observacion),                       // solo si el usuario escribió
         };
 
         // ── Items (replica del original) ──────────────────────
-        // Si el usuario no cargó ningún CodItem, mando uno de prueba para no romper el SP.
+        // ValidarFormulario garantiza que al menos una fila tiene CodItem antes de llegar acá.
         var filasConDatos = Filas
             .Where(x => x.Cantidad > 0 || !string.IsNullOrWhiteSpace(x.CodItem))
             .ToList();
-
-        if (filasConDatos.Count == 0)
-            filasConDatos.Add(new FilaItem { CodItem = "B16315" });
 
         foreach (var f in filasConDatos)
         {

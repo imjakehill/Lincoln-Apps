@@ -6,7 +6,7 @@ namespace SupplyOn_Blazor.Services;
 
 // ============================================================
 // Servicio de consulta/actualización/eliminación lógica de RQs.
-// Usa la tabla TRANSAC del SQL Server LincolnTEST.
+// Usa la tabla TRANSAC del SQL Server <Lincoln2026>.
 // Connection string: appsettings.json -> ConnectionStrings:Lincoln
 // ============================================================
 public class RequerimientoService
@@ -250,7 +250,7 @@ public class RequerimientoService
             SELECT CODITM, DESCRIPCION
             FROM ITEMS
             WHERE SUSPENDIDOS=0
-            ORDER BY DESCRIPCION DESC";
+            ORDER BY DESCRIPCION ASC";
 
         var result = new List<(string, string)>();
 
@@ -263,6 +263,39 @@ public class RequerimientoService
             result.Add((
                 ObtenerString(rd, "CODITM"),
                 ObtenerString(rd, "DESCRIPCION")
+            ));
+        }
+        return result;
+    }
+
+    // ────────────────────────────────────────────────────────────
+    //   CATÁLOGO DE PROVEEDORES (modal lupa de Proveedor Sug.)
+    //   SELECT CODCTACTE, NOMBRE, FANTASIA FROM ctactes WHERE cueprefi='P'
+    //   FANTASIA en NULL se reemplaza por "NA".
+    // ────────────────────────────────────────────────────────────
+    public async Task<List<(string Codigo, string Nombre, string Fantasia)>> GetCatalogoProveedoresAsync()
+    {
+        const string sql = @"
+            SELECT CODCTACTE, NOMBRE, FANTASIA
+            FROM ctactes
+            WHERE cueprefi = 'P'
+            ORDER BY NOMBRE ASC";
+
+        var result = new List<(string, string, string)>();
+
+        using var cn = new SqlConnection(_connectionString);
+        await cn.OpenAsync();
+        using var cmd = new SqlCommand(sql, cn);
+        using var rd = await cmd.ExecuteReaderAsync();
+        while (await rd.ReadAsync())
+        {
+            string fantasia = ObtenerStringNullable(rd, "FANTASIA") ?? "NA";
+            if (string.IsNullOrWhiteSpace(fantasia)) fantasia = "NA";
+
+            result.Add((
+                ObtenerString(rd, "CODCTACTE"),
+                ObtenerString(rd, "NOMBRE"),
+                fantasia
             ));
         }
         return result;
