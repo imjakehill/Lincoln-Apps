@@ -1,5 +1,4 @@
 @page "/viewreq"
-@rendermode InteractiveServer
 @inject NotificationService Notif
 @inject NavigationManager Nav
 @inject SesionService Sesion
@@ -128,7 +127,7 @@
 
                     @* Tipo Pedido *@
                     <div class="filtro-grupo">
-                        <label class="filtro-label">Tipo de pedido</label>
+                        <label class="filtro-label">Prioridad</label>
                         <select class="filtro-input" @bind="Filtro.TipoPedido">
                             <option value="">— Todos —</option>
                             <option value="Urgente">Urgente (≤5 días)</option>
@@ -212,7 +211,7 @@
                             <tr>
                                 <th>N° REQ</th>
                                 <th>BUDGET</th>
-                                <th>TIPO PEDIDO</th>
+                                <th>PRIORIDAD</th>
                                 <th>FECHA CREACIÓN</th>
                                 <th>FECHA REQUERIDA</th>
                                 <th>DEPARTAMENTO</th>

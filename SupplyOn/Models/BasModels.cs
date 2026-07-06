@@ -55,8 +55,14 @@ public class ItemRequest
     public string? CodigoItem         { get; set; }
     public string? NumeroUnidadMedida { get; set; }
 
+    // Centro de Apropiación (CODCEN del centro elegido en la cabecera).
+    // Solo se usa "A"; "B" no aplica.
+    public string CentroApropiacionA { get; set; } = string.Empty;
+
     // ── NO aplican a RQ (sin precios ni cantidad por base SQL incompleta) ──
     public decimal? CantidadPrimeraUnidad { get; set; }
+
+    public decimal? CantidadSegundaUnidad { get; set; }
     public decimal? PrecioUnitario        { get; set; }
     public decimal? ImporteTotal          { get; set; }
     public decimal? ImporteGravado        { get; set; }

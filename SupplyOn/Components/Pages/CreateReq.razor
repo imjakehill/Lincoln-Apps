@@ -1,5 +1,4 @@
 @page "/createreq"
-@rendermode InteractiveServer
 @inject NotificationService Notif
 @inject NavigationManager Nav
 @inject SesionService Sesion
@@ -50,6 +49,29 @@
     @* ── CUERPO AZUL ─────────────────────────────────────────── *@
     <main class="cr-cuerpo">
 
+        @* ── BANNER DE NOTIFICACIÓN (NotificationService) ────── *@
+        @if (Notif.Activa)
+        {
+            <div class="banner-notif banner-@(Notif.Tipo == TipoNotificacion.Exito ? "exito" : "error")">
+                <span class="banner-icono">
+                    @if (Notif.Tipo == TipoNotificacion.Exito)
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
+                        </svg>
+                    }
+                </span>
+                <span class="banner-texto">@Notif.Mensaje</span>
+                <button class="banner-cerrar" @onclick="Notif.Limpiar">✕</button>
+            </div>
+        }
+
         @* ── SUBHEADER: N° req / título / estado ─────────────── *@
         <div class="cr-subheader">
             <div class="req-numero">
@@ -93,20 +115,63 @@
                            placeholder="Ingrese solicitante" />
                 </div>
 
-                @* Departamento — viene del usuario logueado, no editable.
-                   TODO SQL: SELECT depto FROM Usuarios WHERE username=@Sesion.userName *@
+                @* Centro de Apropiación (= departamento) — se carga desde USUARIO_CENTROAP
+                   según el usuario logueado. Varios → dropdown; uno solo → no editable. *@
                 <div class="campo-grupo">
                     <label class="campo-label">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M6.5 0a.5.5 0 0 0-.5.5V3H1.5A1.5 1.5 0 0 0 0 4.5V14H8v-3h.5a.5.5 0 0 1 .5.5v2.5H16V5.5A1.5 1.5 0 0 0 14.5 4H10V.5a.5.5 0 0 0-.5-.5h-3zM2 7h1v1H2V7zm2 0h1v1H4V7zm-2 2h1v1H2V9zm2 0h1v1H4V9zm-2 2h1v1H2v-1zm2 0h1v1H4v-1zM7 5h1v1H7V5zm2 0h1v1H9V5zM7 7h1v1H7V7zm2 0h1v1H9V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM7 9h1v1H7V9zm2 0h1v1H9V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/>
                         </svg>
-                        Departamento
+                        Centro de Apropiación
                     </label>
-                    <div class="campo-readonly-box">
-                        <span class="campo-readonly-value">@(string.IsNullOrWhiteSpace(Departamento) ? "—" : Departamento)</span>
-                        <span class="campo-readonly-hint">del usuario</span>
-                    </div>
+
+                    @if (CentrosAp.Count == 0)
+                    {
+                        <div class="campo-readonly-box">
+                            <span class="campo-readonly-value">—</span>
+                            <span class="campo-readonly-hint">sin centro</span>
+                        </div>
+                    }
+                    else if (CentrosAp.Count == 1)
+                    {
+                        @* Un solo centro → no editable, ya seleccionado *@
+                        <div class="campo-readonly-box">
+                            <span class="campo-readonly-value">@CentrosAp[0].Nombre</span>
+                            <span class="campo-readonly-hint">del usuario</span>
+                        </div>
+                    }
+                    else
+                    {
+                        @* Varios centros → dropdown para elegir *@
+                        <select class="campo-input campo-input-md" @bind="CentroApSeleccionado">
+                            <option value="">-- Seleccioná un centro --</option>
+                            @foreach (var c in CentrosAp)
+                            {
+                                <option value="@c.Key">@c.Nombre</option>
+                            }
+                        </select>
+                    }
                 </div>
+
+                @* Comentarios Internos de Compras — campo nuevo.
+                   Solo se muestra y es editable si el departamento del usuario es "Compras". *@
+                @if (EsCompras)
+                {
+                    <div class="campo-grupo">
+                        <label class="campo-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                            </svg>
+                            Comentarios Internos Compras
+                        </label>
+                        <input class="campo-input campo-input-md"
+                               type="text"
+                               @bind="ComentariosInternosCompras"
+                               @bind:event="oninput"
+                               maxlength="500"
+                               placeholder="Comentarios..." />
+                    </div>
+                }
 
             </div>
 
@@ -134,7 +199,7 @@
                             <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
                             <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
                         </svg>
-                        Tipo de pedido
+                        Prioridad
                     </label>
                     <div class="tipo-pedido-badge tipo-@TipoPedido.ToLowerInvariant().Replace("á","a")">
                         @TipoPedido
@@ -149,11 +214,12 @@
                         </svg>
                         Prefijo
                     </label>
-                    <input class="campo-input campo-input-md"
-                           type="text"
-                           @bind="Prefijo"
-                           @bind:event="oninput"
-                           placeholder="0001" />
+                    <div class="campo-readonly-box">
+                        <span class="campo-readonly-value">@(string.IsNullOrWhiteSpace(Prefijo) ? "—" : Prefijo)</span>
+                        <span class="campo-readonly-hint campo-readonly-hint-tal">
+                            @(string.IsNullOrWhiteSpace(Talonario) ? "Sin talonario" : $"Talonario {Talonario}")
+                        </span>
+                    </div>
                 </div>
 
             </div>
@@ -178,8 +244,9 @@
                               rows="4"></textarea>
                 </div>
 
-                @* Autorización adjunta — drop-zone visual.
-                   TODO: implementar InputFile con validación pdf/jpg/png *@
+                @* Autorización adjunta — carga de archivo (PDF/JPG/PNG).
+                   Aún no se sube a BAS (pendiente de aprobación): por ahora se valida
+                   la extensión y se retiene el archivo en memoria (ArchivoAutorizacion). *@
                 <div class="campo-grupo">
                     <label class="campo-label">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -187,14 +254,36 @@
                         </svg>
                         Autorización adjunta
                     </label>
-                    <div class="campo-dropzone">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
-                        </svg>
-                        <span class="dropzone-text">Adjuntar archivo</span>
-                        <span class="dropzone-formats">PDF · JPG · PNG</span>
-                    </div>
+
+                    <label class="campo-dropzone">
+                        <InputFile OnChange="OnAutorizacionSeleccionada"
+                                   accept=".png,.jpg,.jpeg,.pdf"
+                                   class="dropzone-input" />
+                        @if (string.IsNullOrEmpty(NombreArchivoAutorizacion))
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                            </svg>
+                            <span class="dropzone-text">Adjuntar archivo</span>
+                            <span class="dropzone-formats">PDF · JPG · PNG</span>
+                        }
+                        else
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1z"/>
+                            </svg>
+                            <span class="dropzone-text">@NombreArchivoAutorizacion</span>
+                            <span class="dropzone-formats">@TamanoArchivoAutorizacion</span>
+                        }
+                    </label>
+
+                    @if (!string.IsNullOrEmpty(NombreArchivoAutorizacion))
+                    {
+                        <button type="button" class="dropzone-quitar" @onclick="QuitarAutorizacion">
+                            Quitar archivo
+                        </button>
+                    }
                 </div>
 
             </div>
@@ -212,13 +301,12 @@
                     </svg>
                 </button>
                 <span class="tabla-col-header">COD ITEM</span>
-                <span class="tabla-col-header">BUDGET</span>
                 <span class="tabla-col-header">RUBRO</span>
                 <span class="tabla-col-header">SUBRUBRO</span>
                 <span class="tabla-col-header">CANTIDAD</span>
                 <span class="tabla-col-header">U. DE MEDIDA</span>
-                <span class="tabla-col-header">CANTIDAD U.D.M.</span>
-                <span class="tabla-col-header">ARCH. ADJUNTO</span>
+                <span class="tabla-col-header">CANT. UDM</span>
+                <span class="tabla-col-header">ADJUNTO</span>
                 <span class="tabla-col-header">PROVEEDOR SUG.</span>
                 <span class="tabla-col-header">OBSERVACIÓN ÍTEM</span>
                 <span class="tabla-col-header"></span>
@@ -233,11 +321,11 @@
                     <input class="celda-input celda-readonly" type="text"
                            value="@fila.Item" readonly />
 
-                    @* COD ITEM — editable + botón lupa que abre catálogo de items *@
+                    @* COD ITEM — solo lectura, se carga únicamente desde la lupa (catálogo) *@
                     <div class="celda-coditem">
-                        <input class="celda-input" type="text"
-                               @bind="fila.CodItem"
-                               @bind:event="oninput"
+                        <input class="celda-input celda-readonly" type="text"
+                               value="@fila.CodItem"
+                               readonly
                                placeholder="Cod." />
                         <button type="button"
                                 class="btn-lupa-cell"
@@ -249,24 +337,11 @@
                         </button>
                     </div>
 
-                    @* BUDGET — dropdown por ítem (obligatorio).
-                       Al cambiar autocompleta Rubro/Subrubro de esta misma fila.
-                       TODO SQL: SELECT budget_codigo, descripcion_budget FROM Budget *@
-                    <select class="celda-input"
-                            value="@fila.Budget"
-                            @onchange="@(e => OnBudgetItemCambiado(fila, e.Value?.ToString() ?? string.Empty))">
-                        <option value="">--</option>
-                        @foreach (var op in OpcionesBudget)
-                        {
-                            <option value="@op.Codigo">@op.Codigo</option>
-                        }
-                    </select>
-
-                    @* RUBRO — autocompletado desde Budget de la fila, solo lectura *@
+                    @* RUBRO — autocompletado desde el ítem (lupa), solo lectura *@
                     <input class="celda-input celda-readonly" type="text"
                            value="@fila.Rubro" readonly placeholder="Rubro" />
 
-                    @* SUBRUBRO — autocompletado desde Budget, solo lectura *@
+                    @* SUBRUBRO — autocompletado desde el ítem (lupa), solo lectura *@
                     <input class="celda-input celda-readonly" type="text"
                            value="@fila.Subrubro" readonly placeholder="Subrubro" />
 
@@ -276,11 +351,21 @@
                            @bind:event="oninput"
                            placeholder="0" min="0" />
 
-                    @* U. DE MEDIDA — editable *@
-                    <input class="celda-input" type="text"
-                           @bind="fila.UnidadMedida"
-                           @bind:event="oninput"
-                           placeholder="Unidad" />
+                    @* U. DE MEDIDA — según el ítem: 2 unidades → combobox; 1 → readonly; 0 → "NA" *@
+                    @if (fila.UnidadesDisponibles.Count == 2)
+                    {
+                        <select class="celda-input" @bind="fila.UnidadMedida">
+                            @foreach (var u in fila.UnidadesDisponibles)
+                            {
+                                <option value="@u">@u</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <input class="celda-input celda-readonly" type="text"
+                               value="@fila.UnidadMedida" readonly placeholder="Unidad" />
+                    }
 
                     @* CANTIDAD U.D.M. — editable *@
                     <input class="celda-input" type="number"
@@ -433,7 +518,7 @@
                 else if (!CatalogoItemsFiltrados.Any())
                 {
                     <div class="modal-items-vacio">
-                        Sin coincidencias para "<strong>@BusquedaItem</strong>".
+                        Sin coincidencias para <strong>@BusquedaItem</strong>.
                     </div>
                 }
                 else
@@ -570,10 +655,6 @@
 
         if (firstRender)
         {
-            // TODO SQL: cargar lista real de budgets desde tabla Budget
-            //   SELECT budget_codigo, descripcion_budget FROM Budget ORDER BY budget_codigo
-            CargarOpcionesBudget();
-
             // Catálogo de items desde SQL: SELECT CODITEM, DESCRIPCION FROM ITEMS
             await CargarCatalogoItemsAsync();
 
@@ -584,19 +665,54 @@
             // TODO SQL futuro: SELECT depto FROM Usuarios WHERE username = @Sesion.userName
             Departamento = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName;
 
+            // Prefijo (NO editable) desde el talonario RQ del usuario logueado.
+            // Si el usuario no tiene talonario o XXXPREFIJO es NULL → "N/A".
+            try
+            {
+                string usuarioPrefijo = string.IsNullOrWhiteSpace(Sesion.userName) ? "testrq" : Sesion.userName;
+                var (pref, tal) = await ReqService.GetPrefijoUsuarioAsync(usuarioPrefijo);
+                Prefijo   = pref ?? "N/A";
+                Talonario = tal ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR CreateReq] obteniendo prefijo del talonario: {ex.Message}");
+                Prefijo   = "N/A";
+                Talonario = string.Empty;
+            }
+
+            // Centros de Apropiación del usuario logueado (= su departamento).
+            try
+            {
+                string usuarioCentro = string.IsNullOrWhiteSpace(Sesion.userName) ? "testrq" : Sesion.userName;
+                var centros = await ReqService.GetCentrosApUsuarioAsync(usuarioCentro);
+                CentrosAp = centros
+                    .Select(c => new CentroApOption { Prefijo = c.Prefijo, CodCen = c.CodCen, Nombre = c.Nombre })
+                    .ToList();
+
+                // Si tiene uno solo, queda preseleccionado.
+                CentroApSeleccionado = CentrosAp.Count == 1 ? CentrosAp[0].Key : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR CreateReq] obteniendo centros AP: {ex.Message}");
+                CentrosAp = new();
+                CentroApSeleccionado = string.Empty;
+            }
+
             // Próximo N° de requerimiento desde TRANSAC (max+1).
             // BAS termina asignando el N° real al recibir el POST con Numero=0,
             // pero mostramos el predicho para que el usuario lo vea desde el inicio.
             try
             {
-                int prox = await ReqService.GetProximoNumeroAsync();
-                NroRequerimiento = prox.ToString("0000000000");
+                Correlativo = await ReqService.GetProximoNumeroAsync();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[ERROR CreateReq] obteniendo próximo NROTRANS: {ex.Message}");
             }
 
+            ActualizarNroRequerimiento();
             StateHasChanged();
         }
     }
@@ -606,44 +722,28 @@
     {
         public int Item                { get; set; }
         public string CodItem          { get; set; } = string.Empty;
-        public string Budget           { get; set; } = string.Empty; // obligatorio por ítem
-        public string Rubro            { get; set; } = string.Empty; // viene del Budget (auto)
-        public string Subrubro         { get; set; } = string.Empty; // viene del Budget (auto)
+        public string Rubro            { get; set; } = string.Empty; // viene del ítem (lupa)
+        public string Subrubro         { get; set; } = string.Empty; // viene del ítem (lupa)
         public decimal Cantidad        { get; set; }
-        public string UnidadMedida     { get; set; } = string.Empty;
+        public string UnidadMedida     { get; set; } = string.Empty;   // valor seleccionado
+        public List<string> UnidadesDisponibles { get; set; } = new(); // 0, 1 o 2 (unidad1/unidad2)
+        public string Unidad1          { get; set; } = string.Empty;   // valor de unidad1 del ítem
+        public string Unidad2          { get; set; } = string.Empty;   // valor de unidad2 del ítem
         public decimal CantidadUDM     { get; set; }
         public string ProveedorSugerido{ get; set; } = string.Empty;
         public string ObservacionItem  { get; set; } = string.Empty;
     }
 
-    // ── Opciones de Budget (dropdown) ─────────────────────────
-    private class BudgetOption
-    {
-        public string Codigo { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public string Rubro { get; set; } = string.Empty;
-        public string Subrubro { get; set; } = string.Empty;
-    }
-
-    private List<BudgetOption> OpcionesBudget { get; set; } = new();
-
-    private void CargarOpcionesBudget()
-    {
-        // TODO SQL: reemplazar este placeholder por la consulta real
-        //   SELECT b.budget_codigo, b.descripcion_budget, r.rubro_nombre, r.subrubro
-        //   FROM Budget b INNER JOIN Rubro r ON r.rubro_id = b.rubro_id
-        //   ORDER BY b.budget_codigo
-        OpcionesBudget = new List<BudgetOption>
-        {
-            // datos dummy hasta que esté la consulta SQL
-        };
-    } // Budget se va a cambiar por Centros de Apropiacion
 
     // ── Catálogo de items (modal lupa) ────────────────────────
     private class CatalogoItem
     {
-        public string Codigo      { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
+        public string Codigo       { get; set; } = string.Empty;
+        public string Descripcion  { get; set; } = string.Empty;
+        public string Rubro        { get; set; } = string.Empty; // CODRUB
+        public string Subrubro     { get; set; } = string.Empty; // CODSBR
+        public string Unidad1      { get; set; } = string.Empty; // unidad1
+        public string Unidad2      { get; set; } = string.Empty; // unidad2
     }
 
     private List<CatalogoItem> CatalogoItems { get; set; } = new();
@@ -655,7 +755,15 @@
         {
             var rows = await ReqService.GetCatalogoItemsAsync();
             CatalogoItems = rows
-                .Select(r => new CatalogoItem { Codigo = r.Codigo, Descripcion = r.Descripcion })
+                .Select(r => new CatalogoItem
+                {
+                    Codigo      = r.Codigo,
+                    Descripcion = r.Descripcion,
+                    Rubro       = r.Rubro,
+                    Subrubro    = r.Subrubro,
+                    Unidad1     = r.Unidad1,
+                    Unidad2     = r.Unidad2
+                })
                 .ToList();
             CatalogoError = string.Empty;
         }
@@ -703,7 +811,23 @@
     {
         if (FilaParaCatalogo is null) return;
 
-        FilaParaCatalogo.CodItem = item.Codigo;
+        // Autocompletado desde el ítem seleccionado (datos ya en memoria).
+        FilaParaCatalogo.CodItem  = item.Codigo;
+        FilaParaCatalogo.Rubro    = item.Rubro;      // ya viene "NA" si estaba vacío
+        FilaParaCatalogo.Subrubro = item.Subrubro;   // ya viene "NA" si estaba vacío
+
+        // Unidad de medida: se arman las opciones con unidad1 y unidad2 (solo las que traen valor).
+        //   0 valores → "NA" (readonly)
+        //   1 valor   → ese valor (readonly, como venía)
+        //   2 valores → combobox para elegir
+        var unidades = new List<string>();
+        if (!string.IsNullOrWhiteSpace(item.Unidad1)) unidades.Add(item.Unidad1.Trim());
+        if (!string.IsNullOrWhiteSpace(item.Unidad2)) unidades.Add(item.Unidad2.Trim());
+
+        FilaParaCatalogo.UnidadesDisponibles = unidades;
+        FilaParaCatalogo.UnidadMedida        = unidades.Count == 0 ? "NA" : unidades[0];
+        FilaParaCatalogo.Unidad1             = item.Unidad1?.Trim() ?? string.Empty;
+        FilaParaCatalogo.Unidad2             = item.Unidad2?.Trim() ?? string.Empty;
 
         CerrarModalItems();
     }
@@ -781,14 +905,144 @@
 
     // ── Variables del formulario header (UI) ──────────────────
 
-    //NroRequerimiento se carga desde TRANSAC (ultimo + 1)
-    private string NroRequerimiento { get; set; } = "000001";
+    // N° de requerimiento con formato Prefijo-Correlativo (ej. 0001-00000001).
+    // El Correlativo sale de TRANSAC (MAX(NROTRANS)+1); el Prefijo lo escribe el usuario.
+    // BAS termina asignando el N° real al recibir el POST con Numero=0.
+    private string NroRequerimiento { get; set; } = "N/A-00000001";
+    private int    Correlativo      { get; set; } = 1;
 
-    // Budget ahora vive en cada FilaItem (1 budget por ítem). Ver OnBudgetItemCambiado abajo.
 
     private string Departamento  { get; set; } = string.Empty; // TODO SQL (depto del usuario)
     private string Solicitante   { get; set; } = string.Empty; // opcional
-    private string Prefijo       { get; set; } = "0001";
+
+    // Comentarios internos: campo nuevo, solo para el sector Compras (ver EsCompras).
+    private string ComentariosInternosCompras { get; set; } = string.Empty;
+
+    // El departamento del usuario habilita el campo de comentarios internos.
+    // (Departamento hoy toma el usuario logueado; cuando se implemente el ajuste
+    //  "Departamento según usuario" esta condición seguirá funcionando igual.)
+    private bool EsCompras =>
+        string.Equals(Departamento?.Trim(), "compras", StringComparison.OrdinalIgnoreCase);
+
+    // ── Autorización adjunta (archivo PDF/JPG/PNG) ────────────────
+    // El archivo NO se retiene en memoria: al seleccionarlo/arrastrarlo se escribe a
+    // disco en una carpeta de staging y solo se guarda su RUTA. Todavía NO se sube a BAS
+    // (pendiente de aprobación): cuando esté habilitado, se sube desde esa ruta.
+    private static readonly string[] ExtensionesAdjuntoPermitidas = { ".png", ".jpg", ".jpeg", ".pdf" };
+    private const long MaxTamanoAdjunto = 10 * 1024 * 1024; // 10 MB
+
+    // Carpeta de staging para los adjuntos hasta que se suban a BAS.
+    private static readonly string CarpetaAdjuntos =
+        Path.Combine(Path.GetTempPath(), "SupplyOn", "adjuntos");
+
+    private string RutaArchivoAutorizacion   = string.Empty; // ruta en disco (no en memoria)
+    private string NombreArchivoAutorizacion = string.Empty; // nombre original mostrado al usuario
+    private string TamanoArchivoAutorizacion = string.Empty;
+
+    private async Task OnAutorizacionSeleccionada(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+
+        string ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!ExtensionesAdjuntoPermitidas.Contains(ext))
+        {
+            LimpiarAutorizacion();
+            Notif.Mostrar("Formato no permitido. Solo se aceptan PDF, JPG o PNG.", TipoNotificacion.Error);
+            return;
+        }
+
+        if (file.Size > MaxTamanoAdjunto)
+        {
+            LimpiarAutorizacion();
+            Notif.Mostrar("El archivo supera el tamaño máximo (10 MB).", TipoNotificacion.Error);
+            return;
+        }
+
+        try
+        {
+            // Reemplazo: borro el adjunto anterior (si había) antes de guardar el nuevo.
+            LimpiarAutorizacion();
+
+            Directory.CreateDirectory(CarpetaAdjuntos);
+            // Nombre único en disco para evitar colisiones; se conserva la extensión.
+            string rutaDestino = Path.Combine(CarpetaAdjuntos, $"{Guid.NewGuid():N}{ext}");
+
+            await using (var origen  = file.OpenReadStream(MaxTamanoAdjunto))
+            await using (var destino = File.Create(rutaDestino))
+            {
+                await origen.CopyToAsync(destino);
+            }
+
+            RutaArchivoAutorizacion   = rutaDestino;
+            NombreArchivoAutorizacion = file.Name;
+            TamanoArchivoAutorizacion = FormatearTamano(file.Size);
+
+            // Un adjunto válido limpia cualquier notificación de error previa.
+            Notif.Limpiar();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[CreateReq] error guardando adjunto en disco: {ex.Message}");
+            LimpiarAutorizacion();
+            Notif.Mostrar("No se pudo guardar el archivo. Intentá de nuevo.", TipoNotificacion.Error);
+        }
+    }
+
+    private void QuitarAutorizacion()
+    {
+        LimpiarAutorizacion();
+    }
+
+    private void LimpiarAutorizacion()
+    {
+        // Borra el archivo de staging del disco (si existe) y limpia el estado.
+        if (!string.IsNullOrEmpty(RutaArchivoAutorizacion))
+        {
+            try
+            {
+                if (File.Exists(RutaArchivoAutorizacion))
+                    File.Delete(RutaArchivoAutorizacion);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[CreateReq] no se pudo borrar el adjunto de staging: {ex.Message}");
+            }
+        }
+        RutaArchivoAutorizacion   = string.Empty;
+        NombreArchivoAutorizacion = string.Empty;
+        TamanoArchivoAutorizacion = string.Empty;
+    }
+
+    private static string FormatearTamano(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:0.#} KB";
+        return $"{bytes / (1024.0 * 1024.0):0.#} MB";
+    }
+    private string Prefijo       { get; set; } = "N/A";   // no editable — viene del talonario del usuario
+    private string Talonario     { get; set; } = string.Empty; // N° de talonario asociado (solo informativo)
+
+    // ── Centro de Apropiación (= departamento) del usuario logueado ──
+    //   varios → dropdown | uno solo → no editable, preseleccionado | ninguno → "sin centro"
+    private class CentroApOption
+    {
+        public string Prefijo { get; set; } = string.Empty;
+        public string CodCen  { get; set; } = string.Empty;
+        public string Nombre  { get; set; } = string.Empty;
+        public string Key => CodCen; // el centro se identifica por CODCEN (el prefijo no se usa)
+    }
+
+    private List<CentroApOption> CentrosAp { get; set; } = new();
+    private string CentroApSeleccionado { get; set; } = string.Empty; // centro elegido (clave "PREFIJO|CODCEN")
+
+    // El Prefijo NO es editable (vendrá del talonario configurado en BAS — ajuste #4 pendiente).
+    // El N° de requerimiento se arma como Prefijo-Correlativo, donde el correlativo = MAX(NROTRANS)+1.
+    private void ActualizarNroRequerimiento()
+    {
+        string pref = string.IsNullOrWhiteSpace(Prefijo) ? "N/A" : Prefijo.Trim();
+        NroRequerimiento = $"{pref}-{Correlativo:00000000}";
+    }
     private DateTime FechaRequerida { get; set; } = DateTime.Today; // obligatoria
     private string Observacion   { get; set; } = string.Empty;
     private string IdiomaSeleccionado { get; set; } = "es";
@@ -803,20 +1057,6 @@
             if (dias <= 10) return "Media";
             return "Estándar";
         }
-    }
-
-    // Cuando cambia el Budget de un ítem, auto-completar Rubro/Subrubro de esa misma fila.
-    private void OnBudgetItemCambiado(FilaItem fila, string nuevoBudget)
-    {
-        fila.Budget = nuevoBudget;
-
-        // TODO SQL: lookup del rubro asociado al budget elegido (por ítem)
-        //   SELECT r.rubro_nombre, r.subrubro FROM Budget b
-        //   INNER JOIN Rubro r ON r.rubro_id = b.rubro_id
-        //   WHERE b.budget_codigo = @fila.Budget
-        var op = OpcionesBudget.FirstOrDefault(o => o.Codigo == nuevoBudget);
-        fila.Rubro    = op?.Rubro    ?? string.Empty;
-        fila.Subrubro = op?.Subrubro ?? string.Empty;
     }
 
     // ── Variables para construir el JSON BAS ──────────────────
@@ -871,7 +1111,6 @@
 
     private void AgregarFila()
     {
-        // Cada ítem es independiente: empieza sin Budget/Rubro propio.
         Filas.Add(new FilaItem { Item = Filas.Count + 1 });
         PaginaActual = TotalPaginas;
     }
@@ -982,8 +1221,11 @@
             req.Items.Add(new ItemRequest
             {
                 CodigoItem               = V(f.CodItem),
-                NumeroUnidadMedida       = V(f.UnidadMedida) ?? "1",
-                CantidadPrimeraUnidad    = 1m,
+                // BAS exige "1" o "2" según cuál unidad del ítem esté elegida en la U. de Medida.
+                NumeroUnidadMedida       = (!string.IsNullOrWhiteSpace(f.Unidad2) && f.UnidadMedida == f.Unidad2) ? "2" : "1",
+                CentroApropiacionA       = CentroApSeleccionado,
+                CantidadPrimeraUnidad    = f.UnidadMedida==f.Unidad2 ? 0 : f.CantidadUDM,
+                CantidadSegundaUnidad    = f.UnidadMedida==f.Unidad1 ? 0 : f.CantidadUDM,
                 PrecioUnitario           = 1000m,
                 ImporteTotal             = 1210m,
                 ImporteGravado           = 1000m,

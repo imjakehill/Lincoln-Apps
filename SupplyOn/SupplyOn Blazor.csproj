@@ -20,6 +20,12 @@
     <Content Remove="TODOBASWEBAPI\**" />
     <EmbeddedResource Remove="TODOBASWEBAPI\**" />
     <None Remove="TODOBASWEBAPI\**" />
+
+    <!-- BASWEBAPIEJEMPLO es el WebApi BAS de ejemplo (proyecto aparte) y tampoco debe compilarse junto al Blazor -->
+    <Compile Remove="BASWEBAPIEJEMPLO\**" />
+    <Content Remove="BASWEBAPIEJEMPLO\**" />
+    <EmbeddedResource Remove="BASWEBAPIEJEMPLO\**" />
+    <None Remove="BASWEBAPIEJEMPLO\**" />
   </ItemGroup>
 
   <ItemGroup>

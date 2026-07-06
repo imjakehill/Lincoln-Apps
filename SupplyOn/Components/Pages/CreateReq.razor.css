@@ -317,6 +317,15 @@
     font-weight: 500;
 }
 
+/* Variante del hint que muestra el N° de talonario (sin mayúsculas forzadas,
+   tamaño cercano al del prefijo) */
+.campo-readonly-hint-tal {
+    text-transform: none;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    letter-spacing: normal;
+}
+
 /* Campos de solo lectura (Budget) — variante input legacy */
 .campo-readonly {
     background-color: #d4dff0;
@@ -408,6 +417,7 @@
 
 /* Drop-zone para adjuntos */
 .campo-dropzone {
+    position: relative;          /* ancla el overlay transparente del <input type=file> */
     width: 100%;
     background-color: rgba(255, 255, 255, 0.08);
     border: 1.5px dashed rgba(255, 255, 255, 0.4);
@@ -445,6 +455,101 @@
     text-transform: uppercase;
 }
 
+/* Input de archivo real: transparente y estirado sobre TODO el drop-zone, así recibe
+   tanto el click como el arrastrar-y-soltar (drag & drop nativo, sin JS). El contenido
+   visible (ícono + textos) queda detrás. InputFile es un componente hijo, por eso ::deep. */
+.campo-dropzone ::deep .dropzone-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Botón para quitar el archivo adjunto seleccionado */
+.dropzone-quitar {
+    margin-top: 8px;
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    color: #ffd7d7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.dropzone-quitar:hover {
+    color: #ff9a9a;
+}
+
+/* ── BANNER DE NOTIFICACIÓN (NotificationService) ───────────────
+   Estilos scoped: se replican acá porque los originales viven en
+   Home.razor.css / ViewReq.razor.css y no alcanzan a esta página. */
+.banner-notif {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    animation: bannerEntrar 0.3s ease-out;
+}
+
+@keyframes bannerEntrar {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner-exito {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.banner-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.banner-icono {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.banner-texto {
+    flex: 1;
+}
+
+.banner-cerrar {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: opacity 0.15s;
+}
+
+    .banner-cerrar:hover {
+        opacity: 1;
+    }
+
 /* ── TABLA DE ÍTEMS ───────────────────────────────────────────── */
 .cr-tabla-contenedor {
     background-color: #ffffff;
@@ -454,10 +559,10 @@
 }
 
 /* Barra superior de la tabla con headers
-   12 columnas: ITEM | COD(+lupa) | BUDGET | RUBRO | SUBRUBRO | CANTIDAD | UDM | CANT.UDM | ADJ. | PROV. | OBS. | borrar */
+   11 columnas: ITEM | COD(+lupa) | RUBRO | SUBRUBRO | CANTIDAD | UDM | CANT.UDM | ADJ. | PROV. | OBS. | borrar */
 .tabla-topbar {
     display: grid;
-    grid-template-columns: 44px 120px 75px 90px 90px 70px 100px 110px 100px 180px 1fr 44px;
+    grid-template-columns: 44px 150px 90px 90px 70px 120px 90px 100px 160px 1fr 44px;
     align-items: center;
     padding: 10px 12px;
     border-bottom: 2px solid #eef1f6;
@@ -471,6 +576,9 @@
     text-transform: uppercase;
     letter-spacing: 0.4px;
     white-space: nowrap;
+    overflow: hidden;          /* si el título no entra, se recorta en vez de montarse */
+    text-overflow: ellipsis;
+    min-width: 0;              /* permite que el item del grid se achique sin desbordar */
 }
 
 /* Botón + agregar fila */
@@ -501,7 +609,7 @@
 /* Filas de la tabla — mismo grid que .tabla-topbar */
 .tabla-fila {
     display: grid;
-    grid-template-columns: 44px 120px 75px 90px 90px 70px 100px 110px 100px 170px 1fr 44px;
+    grid-template-columns: 44px 150px 90px 90px 70px 120px 90px 100px 160px 1fr 44px;
     align-items: center;
     padding: 8px 12px;
     border-bottom: 1px solid #eef1f6;

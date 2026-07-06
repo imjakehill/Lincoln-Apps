@@ -219,6 +219,67 @@ public class RequerimientoService
     }
 
     // ────────────────────────────────────────────────────────────
+    //   PREFIJO DEL TALONARIO SEGÚN USUARIO LOGUEADO
+    //   El prefijo del RQ sale del talonario habilitado para el usuario.
+    //   Devuelve null si el usuario no tiene talonario RQ o XXXPREFIJO es NULL.
+    // ────────────────────────────────────────────────────────────
+    public async Task<(string? Prefijo, string? Talonario)> GetPrefijoUsuarioAsync(string usuario)
+    {
+        const string sql = @"
+            SELECT TOP 1 a.TALONARIO, b.XXXPREFIJO
+            FROM PERMISOSTAL a
+            JOIN TALONARIOS b ON a.talonario = b.talonario
+            WHERE a.CODCMP = 'RQ' AND a.usuario = @Usuario";
+
+        using var cn = new SqlConnection(_connectionString);
+        await cn.OpenAsync();
+        using var cmd = new SqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@Usuario", (object?)usuario ?? DBNull.Value);
+        using var rd = await cmd.ExecuteReaderAsync();
+
+        if (!await rd.ReadAsync()) return (null, null);
+
+        string? talonario = rd.IsDBNull(0) ? null : rd.GetValue(0)?.ToString()?.Trim();
+        string? prefijo   = rd.IsDBNull(1) ? null : rd.GetValue(1)?.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(talonario)) talonario = null;
+        if (string.IsNullOrWhiteSpace(prefijo))   prefijo   = null;
+        return (prefijo, talonario);
+    }
+
+    // ────────────────────────────────────────────────────────────
+    //   CENTROS DE APROPIACIÓN DEL USUARIO (= su departamento)
+    //   Mapeo usuario→centro en USUARIO_CENTROAP; la descripción (NOMBRE)
+    //   sale de centrosap con el join por CODCEN (el prefijo NO se usa acá).
+    //   LEFT JOIN + fallback a CODCEN por si un centro no está en centrosap.
+    // ────────────────────────────────────────────────────────────
+    public async Task<List<(string Prefijo, string CodCen, string Nombre)>> GetCentrosApUsuarioAsync(string usuario)
+    {
+        const string sql = @"
+            SELECT u.PREFIJO, u.CODCEN, c.NOMBRE
+            FROM USUARIO_CENTROAP u
+            LEFT JOIN centrosap c ON c.CODCEN = u.CODCEN
+            WHERE u.USUARIO = @Usuario AND u.ACTIVO = 1
+            ORDER BY c.NOMBRE";
+
+        var result = new List<(string, string, string)>();
+
+        using var cn = new SqlConnection(_connectionString);
+        await cn.OpenAsync();
+        using var cmd = new SqlCommand(sql, cn);
+        cmd.Parameters.AddWithValue("@Usuario", (object?)usuario ?? DBNull.Value);
+        using var rd = await cmd.ExecuteReaderAsync();
+        while (await rd.ReadAsync())
+        {
+            string prefijo = ObtenerString(rd, "PREFIJO");
+            string codcen  = ObtenerString(rd, "CODCEN");
+            string nombre  = ObtenerString(rd, "NOMBRE");
+            if (string.IsNullOrWhiteSpace(nombre)) nombre = codcen; // sin match en centrosap
+            result.Add((prefijo, codcen, nombre));
+        }
+        return result;
+    }
+
+    // ────────────────────────────────────────────────────────────
     //   ELIMINACIÓN LÓGICA
     //   UPDATE TRANSAC SET FLGELI='E' WHERE NROTRANS=@nro
     //   Sólo si NO está autorizado (ESTADOAUT distinto de 'A').
@@ -244,15 +305,19 @@ public class RequerimientoService
     //   CATÁLOGO DE ITEMS (modal lupa de CreateReq)
     //   SELECT CODITEM, DESCRIPCION FROM ITEMS
     // ────────────────────────────────────────────────────────────
-    public async Task<List<(string Codigo, string Descripcion)>> GetCatalogoItemsAsync()
+    public async Task<List<(string Codigo, string Descripcion, string Rubro, string Subrubro, string Unidad1, string Unidad2)>> GetCatalogoItemsAsync()
     {
+        // Rubro (CODRUB), Subrubro (CODSBR) y las Unidades de Medida (unidad1 / unidad2)
+        // viven en la misma tabla ITEMS, así que se traen junto al código/descripción en
+        // esta única consulta (que ya se carga una sola vez al abrir la pantalla). Al
+        // seleccionar un ítem por la lupa esos valores se autocompletan desde memoria.
         const string sql = @"
-            SELECT CODITM, DESCRIPCION
+            SELECT CODITM, DESCRIPCION, CODRUB, CODSBR, unidad1, unidad2
             FROM ITEMS
             WHERE SUSPENDIDOS=0
             ORDER BY DESCRIPCION ASC";
 
-        var result = new List<(string, string)>();
+        var result = new List<(string, string, string, string, string, string)>();
 
         using var cn = new SqlConnection(_connectionString);
         await cn.OpenAsync();
@@ -260,11 +325,22 @@ public class RequerimientoService
         using var rd = await cmd.ExecuteReaderAsync();
         while (await rd.ReadAsync())
         {
+            // Rubro y Subrubro: si vienen NULL/vacío se muestran como "NA" (igual que FANTASIA).
+            string rubro    = ObtenerString(rd, "CODRUB");
+            string subrubro = ObtenerString(rd, "CODSBR");
+
             result.Add((
                 ObtenerString(rd, "CODITM"),
-                ObtenerString(rd, "DESCRIPCION")
+                ObtenerString(rd, "DESCRIPCION"),
+                string.IsNullOrWhiteSpace(rubro)    ? "NA" : rubro,
+                string.IsNullOrWhiteSpace(subrubro) ? "NA" : subrubro,
+                // Unidades crudas: la lógica NA / combobox se resuelve en la UI según
+                // cuántas de las dos traigan valor.
+                ObtenerString(rd, "unidad1"),
+                ObtenerString(rd, "unidad2")
             ));
         }
+
         return result;
     }
 
