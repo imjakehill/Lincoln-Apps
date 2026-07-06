@@ -9,8 +9,10 @@ namespace SupplyOn_Blazor.Models;
 public class ComprobanteCompraRequest
 {
     // ── Obligatorios siempre ──────────────────────────────
-    public string FechaCreacion { get; set; } = string.Empty;
+    public string FechaCreacion  { get; set; } = string.Empty;
     public string Fecha          { get; set; } = string.Empty;
+    //public string Proveedor      { get; set; } = string.Empty;
+    //public string Nombre         { get; set; } = string.Empty; // Nombre del proveedor
     public string Comprobante    { get; set; } = string.Empty; // RQ o OC
     public string Prefijo        { get; set; } = string.Empty;
     public int    Numero         { get; set; }                 // 0 = autoincremental BAS
@@ -24,7 +26,7 @@ public class ComprobanteCompraRequest
 
     // ── Opcionales: si quedan en null NO se serializan ────
     // (BasApiClient usa JsonIgnoreCondition.WhenWritingNull)
-    //public string?  Proveedor              { get; set; }       // OPCIONAL en RQ
+    public string?  Proveedor              { get; set; }       // requerido: da el CODCTACTE que BAS inserta en PROVEITEMS
     //public string?  Nombre                 { get; set; }       // OPCIONAL
     public string?  ObservacionComprobante { get; set; }       // OPCIONAL — se manda si tiene texto
     public string?  Comprador              { get; set; }
@@ -55,14 +57,14 @@ public class ItemRequest
     public string? CodigoItem         { get; set; }
     public string? NumeroUnidadMedida { get; set; }
 
-    // Centro de Apropiación (CODCEN del centro elegido en la cabecera).
-    // Solo se usa "A"; "B" no aplica.
-    public string CentroApropiacionA { get; set; } = string.Empty;
+    // Centro de Apropiación (CODCEN del centro elegido en la cabecera). BAS lo usa para
+    // MVSITEMS.(CENPREFI='A' literal, CODCEN). Debe existir en CENTROSAP. "B" no se usa.
+    // Nullable → si va null se omite y BAS usa el centro por defecto de la sucursal.
+    public string? CentroApropiacionA { get; set; }
 
-    // ── NO aplican a RQ (sin precios ni cantidad por base SQL incompleta) ──
     public decimal? CantidadPrimeraUnidad { get; set; }
 
-    public decimal? CantidadSegundaUnidad { get; set; }
+    //public decimal? CantidadSegundaUnidad { get; set; }
     public decimal? PrecioUnitario        { get; set; }
     public decimal? ImporteTotal          { get; set; }
     public decimal? ImporteGravado        { get; set; }

@@ -662,7 +662,7 @@
 
             // Departamento = usuario logueado (mientras no haya base con la relación real).
             // TODO SQL futuro: SELECT depto FROM Usuarios WHERE username = @Sesion.userName
-            Departamento = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName;
+            Departamento = string.IsNullOrWhiteSpace(Sesion.userName) ? "testrq" : Sesion.userName;
 
             // Prefijo (NO editable) desde el talonario RQ del usuario logueado.
             // Si el usuario no tiene talonario o XXXPREFIJO es NULL → "N/A".
@@ -1180,7 +1180,13 @@
         static string? V(string s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
         string prefijoFinal = string.IsNullOrWhiteSpace(Prefijo) ? "0001" : Prefijo.Trim();
-        string usuarioFinal = string.IsNullOrWhiteSpace(Sesion.userName) ? "daniponce" : Sesion.userName; // cambiar esta hardcodeando el usuario
+        string usuarioFinal = string.IsNullOrWhiteSpace(Sesion.userName) ? "testrq" : Sesion.userName;
+
+        // BAS necesita un proveedor (CODCTACTE) para insertar en PROVEITEMS al procesar el ítem.
+        // Uso el primer "proveedor sugerido" cargado; si no hay ninguno, un default válido (P0003).
+        string proveedorFinal = Filas
+            .Select(x => x.ProveedorSugerido)
+            .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p)) ?? "P0003";
 
         var req = new ComprobanteCompraRequest
         {
@@ -1190,10 +1196,7 @@
             Comprobante            = "RQ",
             Prefijo                = prefijoFinal,
             Numero                 = 0,                                    // bas asigna
-            //Proveedor              = V(Proveedor),
-            //Nombre                 = V(NombreProveedor) ?? "Proveedor de Prueba",
-            MonedaCtaCte           = "",
-            MonedaComprobante      = "",
+            Proveedor              = proveedorFinal,                       // requerido por PROVEITEMS (CODCTACTE)
             TotalGravado           = 1000m,
             TotalIva               = 210m,
             Total                  = 1210m,
@@ -1220,11 +1223,9 @@
             req.Items.Add(new ItemRequest
             {
                 CodigoItem               = V(f.CodItem),
-                // BAS exige "1" o "2" según cuál unidad del ítem esté elegida en la U. de Medida.
-                NumeroUnidadMedida       = (!string.IsNullOrWhiteSpace(f.Unidad2) && f.UnidadMedida == f.Unidad2) ? "2" : "1",
-                CentroApropiacionA       = CentroApSeleccionado,
-                CantidadPrimeraUnidad    = f.UnidadMedida==f.Unidad2 ? 0 : f.CantidadUDM,
-                CantidadSegundaUnidad    = f.UnidadMedida==f.Unidad1 ? 0 : f.CantidadUDM,
+                NumeroUnidadMedida       = "1",                            // BAS exige "1" o "2"
+                CentroApropiacionA       = V(CentroApSeleccionado),        // CODCEN del centro (cabecera) → MVSITEMS/CENTROSAP
+                CantidadPrimeraUnidad    = 1m,
                 PrecioUnitario           = 1000m,
                 ImporteTotal             = 1210m,
                 ImporteGravado           = 1000m,
