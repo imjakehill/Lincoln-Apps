@@ -76,23 +76,27 @@
     gap: 16px;
 }
 
+/* Botón "Volver" a la izquierda del usuario — mismo estilo que "Cerrar Sesión" */
 .btn-volver-header {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-    border: 1.5px solid rgba(255,255,255,0.4);
-    color: #ffffff;
-    cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    justify-self: start;
-    transition: background-color 0.15s;
+    gap: 5px;
+    margin-right: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1a3a6b;
+    background-color: transparent;
+    border: 1px solid #c3d0e4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 
     .btn-volver-header:hover {
-        background: rgba(255,255,255,0.25);
+        background-color: #1a3a6b;
+        border-color: #1a3a6b;
+        color: #ffffff;
     }
 
 .vr-titulo-box {

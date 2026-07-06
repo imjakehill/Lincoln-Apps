@@ -17,6 +17,15 @@
 
 <div class="dashboard-completo">
 
+    @* ── OVERLAY BLOQUEANTE AL CERRAR SESIÓN ─────────────────── *@
+    @if (CerrandoSesion)
+    {
+        <div class="logout-overlay">
+            <div class="logout-spinner"></div>
+            <span class="logout-texto">Cerrando sesión...</span>
+        </div>
+    }
+
     @* ── HEADER ─────────────────────────────────────────────── *@
     <header class="dashboard-header">
 
@@ -28,8 +37,16 @@
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10c-2.029 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                 </svg>
             </span>
-            @* TODO: Bindear con el nombre del usuario autenticado *@
             <span class="nombre-usuario">@NombreUsuario.ToUpper()</span>
+
+            @* Cerrar sesión → vuelve al login para ingresar con otro usuario *@
+            <button class="btn-logout" @onclick="CerrarSesion" disabled="@CerrandoSesion" title="Cerrar sesión e ingresar con otro usuario">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                </svg>
+                Cerrar Sesión
+            </button>
         </div>
 
         @* Logo central *@
@@ -323,6 +340,20 @@
     private void IrConsultarRequerimientos() => Nav.NavigateTo("/viewreq");
     private void IrDescargaInformacion() => Debug.WriteLine("→ Descarga de Información"); // TODO
 
+    // ── Cerrar sesión ─────────────────────────────────────────
+    private bool CerrandoSesion { get; set; } = false;
+
+    // Muestra un overlay bloqueante (no se puede tocar nada) mientras cierra la sesión.
+    private async Task CerrarSesion()
+    {
+        if (CerrandoSesion) return;
+        CerrandoSesion = true;
+        StateHasChanged();
+        await Task.Delay(500);              // deja ver el overlay un instante
+        Sesion.logOutUser();
+        Nav.NavigateTo("/login", replace: true);
+    }
+
     // ── Ciclo de vida ─────────────────────────────────────────
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -342,7 +373,7 @@
             {
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(5000);
+                    await Task.Delay(10000);
                     Notif.Limpiar();
                     await InvokeAsync(StateHasChanged);
                 });

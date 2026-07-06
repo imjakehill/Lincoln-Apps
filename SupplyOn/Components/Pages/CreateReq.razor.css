@@ -31,6 +31,29 @@
     font-size: 0.9rem;
 }
 
+/* Botón "Volver" a la izquierda del usuario — mismo estilo que "Cerrar Sesión" */
+.btn-volver-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1a3a6b;
+    background-color: transparent;
+    border: 1px solid #c3d0e4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+    .btn-volver-header:hover {
+        background-color: #1a3a6b;
+        border-color: #1a3a6b;
+        color: #ffffff;
+    }
+
 .header-logo {
     display: flex;
     align-items: center;

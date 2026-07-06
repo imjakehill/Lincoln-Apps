@@ -35,6 +35,69 @@
     color: #1a3a6b;
 }
 
+/* Botón "Cerrar Sesión" junto al nombre de usuario */
+.btn-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1a3a6b;
+    background-color: transparent;
+    border: 1px solid #c3d0e4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+    .btn-logout:hover {
+        background-color: #1a3a6b;
+        border-color: #1a3a6b;
+        color: #ffffff;
+    }
+
+    .btn-logout:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* Overlay bloqueante mientras se cierra la sesión */
+.logout-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(26, 58, 107, 0.45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 9999;
+    cursor: wait;
+}
+
+.logout-spinner {
+    width: 46px;
+    height: 46px;
+    border: 4px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: logoutspin 0.8s linear infinite;
+}
+
+@keyframes logoutspin {
+    to { transform: rotate(360deg); }
+}
+
+.logout-texto {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+}
+
 .header-logo {
     display: flex;
     align-items: center;
