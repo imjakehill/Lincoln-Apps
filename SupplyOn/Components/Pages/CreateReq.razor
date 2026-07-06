@@ -142,9 +142,8 @@
                     }
                     else
                     {
-                        @* Varios centros → dropdown para elegir *@
+                        @* Varios centros → dropdown, con el primero seleccionado por default *@
                         <select class="campo-input campo-input-md" @bind="CentroApSeleccionado">
-                            <option value="">-- Seleccioná un centro --</option>
                             @foreach (var c in CentrosAp)
                             {
                                 <option value="@c.Key">@c.Nombre</option>
@@ -690,8 +689,8 @@
                     .Select(c => new CentroApOption { Prefijo = c.Prefijo, CodCen = c.CodCen, Nombre = c.Nombre })
                     .ToList();
 
-                // Si tiene uno solo, queda preseleccionado.
-                CentroApSeleccionado = CentrosAp.Count == 1 ? CentrosAp[0].Key : string.Empty;
+                // El primer centro queda seleccionado por default (haya uno o varios).
+                CentroApSeleccionado = CentrosAp.Count >= 1 ? CentrosAp[0].Key : string.Empty;
             }
             catch (Exception ex)
             {
